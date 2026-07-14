@@ -1,56 +1,41 @@
 # NEXT_TASK
 
-**Sprint:** 4 — Выбор сильного тематического пилота  
-**Task ID:** PT-003  
-**Owner:** Producer + Architect + Game Designer
+**Sprint:** 5 — Alchemy Lab pilot  
+**Task ID:** PT-004  
+**Owner:** Producer + Architect + Game Designer + Programmer
 
 ## Задача
 
-Выбрать **следующий перспективный пилот**, который будет сильнее обычного clicker по интересу, фантазии и долгосрочному потенциалу.
+Развить `Alchemy Lab` как первый **тематический и продуктово интересный** пилот Studio OS.
 
 ## Что уже сделано
 
-- Studio OS стабилизирована и разложена по файлам;
-- template проверен build/typecheck;
-- создан технический пилот `90_PROJECTS/SeedClickerMini/`;
-- подтверждено, что template можно быстро адаптировать под простую игру.
+- Studio OS стабилизирована;
+- template проходит `typecheck` и `build`;
+- `SeedClickerMini` подтвердил техническую жизнеспособность шаблона;
+- выбран и поднят новый тематический пилот `90_PROJECTS/AlchemyLab/`;
+- сделан первый playable prototype и standalone HTML-версия.
 
-## Важно
+## Почему именно Alchemy Lab
 
-`SeedClickerMini` теперь рассматривается как **технический smoke-test**, а не как главный продуктовый вектор.
+- merge остаётся понятным casual-loop;
+- discovery делает проект интереснее обычного merge/clicker;
+- orders и journal создают retention-потенциал;
+- тема хорошо подходит под mobile-first и solo + AI production.
 
-## Новые кандидаты
+## Ближайший план
 
-См. `PILOT_CANDIDATES.md`.
-
-### Приоритетный shortlist
-
-1. **Alchemy Lab** — merge + discovery + orders
-2. **Archaeology Camp** — merge + collector + zone unlock
-3. **Artifact Suitcase** — inventory puzzle + merge
-
-## Рекомендация
-
-Лучший следующий шаг сейчас — **Alchemy Lab**.
-
-Почему:
-- выглядит интереснее базового merge;
-- даёт чувство открытия;
-- реалистичен для MVP;
-- хорошо подходит под solo + AI pipeline;
-- достаточно отличается от примитивного clicker.
-
-## План после выбора
-
-1. Создать новый пилот в `90_PROJECTS/<project>/`
-2. Заполнить `PROJECT.md`, `GAME_DESIGN.md`, `ECONOMY.md`
-3. Поднять первый HTML-прототип
-4. Прогнать `typecheck`, `build`, QA baseline
-5. Добавить новый example / case study
+1. Доработать `Alchemy Lab` как основной демонстрационный пилот
+2. Усилить visual feedback merge и discoveries
+3. Добавить больше order variety
+4. При необходимости сделать v0.2 с rare ingredients / daily orders
+5. Использовать опыт пилота для чистки Studio OS
 
 ## Definition of Done
 
-- [ ] выбран новый жанрово-тематический пилот
-- [ ] создан новый проект в `90_PROJECTS/`
-- [ ] сделан первый playable prototype
-- [ ] зафиксированы причины выбора и риски
+- [x] создан новый тематический пилот
+- [x] playable prototype существует
+- [x] standalone HTML существует
+- [x] docs проекта заполнены
+- [ ] сделана более polished версия v0.2
+- [ ] добавлен расширенный case study

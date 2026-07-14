@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Alchemy Lab</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at top, rgba(96,102,190,.25), transparent 30%), linear-gradient(180deg,#0f1228 0%, #14193a 100%);
+      color: #fff;
+    }
+    body { padding: 16px; }
+    .app { max-width: 1080px; margin: 0 auto; }
+    .hud, .panel {
+      background: rgba(32,37,77,.92); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 22px; box-shadow: 0 18px 36px rgba(0,0,0,.24);
+    }
+    .hud { position: sticky; top: 0; padding: 12px 14px; margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; z-index: 5; }
+    .chip { background: rgba(255,255,255,.08); border-radius: 999px; padding: 8px 12px; font-weight: 800; }
+    .muted { opacity: .72; }
+    .panel { padding: 20px; }
+    .hero { display: grid; gap: 14px; margin-bottom: 16px; }
+    .eyebrow { color: #f5c76c; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+    h1 { font-size: 34px; }
+    .subtitle { max-width: 680px; line-height: 1.5; opacity: .84; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    button { border: 0; border-radius: 14px; min-height: 48px; padding: 12px 18px; font-size: 16px; font-weight: 800; cursor: pointer; }
+    .gold { color: #1f1600; background: linear-gradient(180deg,#f5c76c 0%, #e5a94b 100%); }
+    .secondary { color: #fff; background: rgba(255,255,255,.12); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .layout { display: grid; grid-template-columns: 1.15fr 1.35fr 1fr; gap: 16px; }
+    .order { display: grid; gap: 12px; }
+    .order-card { background: rgba(255,255,255,.06); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+    .order-main { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .order-item { display: flex; gap: 12px; align-items: center; }
+    .order-emoji { font-size: 28px; }
+    .board { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .cell {
+      min-height: 118px; border-radius: 16px; display: grid; gap: 8px; place-content: center;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.14));
+      border: 2px solid transparent; color: #fff;
+    }
+    .cell.locked { opacity: .35; }
+    .cell.empty { color: rgba(255,255,255,.4); }
+    .cell.selected { border-color: #f5c76c; box-shadow: 0 0 0 2px rgba(245,199,108,.25); }
+    .journal { display: grid; gap: 10px; }
+    .entry { background: rgba(255,255,255,.06); border-radius: 14px; padding: 12px; display: flex; gap: 12px; align-items: center; }
+    .hidden { opacity: .45; }
+    .stack { display: grid; gap: 10px; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { h1 { font-size: 28px; } .order-main { flex-direction: column; align-items: flex-start; } .cell { min-height: 96px; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hud">
+      <div class="chip">✨ Эссенция: <span id="essence">0</span></div>
+      <div class="chip">📘 Открытия: <span id="discoveriesCount">1</span></div>
+      <div class="chip">📜 Заказы: <span id="ordersCompleted">0</span></div>
+    </div>
+
+    <section class="panel hero">
+      <div>
+        <div class="eyebrow">Product Pilot</div>
+        <h1>Alchemy Lab</h1>
+        <p class="subtitle">Собирай искры, выращивай редкие ингредиенты и выполняй заказы алхимической мастерской. Это standalone-версия, её можно открыть двойным кликом.</p>
+      </div>
+      <div class="actions">
+        <button id="gatherBtn" class="gold">Собрать ингредиент</button>
+        <button id="fulfillBtn" class="secondary">Выполнить заказ</button>
+        <button id="unlockBtn" class="secondary">Открыть клетку</button>
+        <button id="catalystBtn" class="secondary">Усилить катализатор</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel order">
+        <h2>Текущий заказ</h2>
+        <div id="orderCard" class="order-card"></div>
+        <div class="muted">Собери нужный ингредиент на столе и сдай его за эссенцию.</div>
+      </div>
+
+      <div class="panel stack">
+        <div style="display:flex; justify-content:space-between; gap:12px; align-items:baseline;">
+          <h2>Алхимический стол</h2>
+          <span id="boardHint" class="muted"></span>
+        </div>
+        <div id="board" class="board"></div>
+      </div>
+
+      <div class="panel stack">
+        <h2>Журнал открытий</h2>
+        <div id="journal" class="journal"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const KEY = 'alchemy_lab_standalone_save_v1';
+    const ITEMS = [
+      { tier: 0, name: 'Spark', emoji: '✨', color: '#f7d774' },
+      { tier: 1, name: 'Glow Herb', emoji: '🌿', color: '#8de57d' },
+      { tier: 2, name: 'Moon Bloom', emoji: '🌸', color: '#d8a8ff' },
+      { tier: 3, name: 'Aether Crystal', emoji: '💎', color: '#7fd5ff' },
+      { tier: 4, name: 'Sun Elixir', emoji: '🧪', color: '#ffbe6b' }
+    ];
+    const ORDER_REWARDS = { 1: 12, 2: 28, 3: 65, 4: 150 };
+    const unlockCosts = [20, 40, 70];
+    const gridSize = 9;
+    let selectedIndex = null;
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+    function createOrder(highestTier, catalystLevel) {
+      const maxTier = Math.max(1, Math.min(highestTier, ITEMS.length - 1));
+      const tier = Math.floor(Math.random() * maxTier) + 1;
+      const reward = Math.round((ORDER_REWARDS[tier] || 12) * (1 + catalystLevel * 0.25));
+      return { id: Date.now() + Math.random(), tier, reward };
+    }
+    const state = load() || {
+      essence: 0,
+      catalystLevel: 0,
+      unlockedCells: 6,
+      grid: Array.from({ length: gridSize }, () => null),
+      currentOrder: { id: 1, tier: 1, reward: 12 },
+      highestDiscoveredTier: 0,
+      discoveries: [0],
+      ordersCompleted: 0,
+      mergesCompleted: 0,
+      gatheredCount: 0
+    };
+
+    function firstEmpty() {
+      for (let i = 0; i < state.unlockedCells; i++) if (state.grid[i] === null) return i;
+      return -1;
+    }
+    function catalystCost() { return Math.round(25 * Math.pow(1.8, state.catalystLevel)); }
+    function unlockCost() { return unlockCosts[state.unlockedCells - 6] ?? null; }
+    function canFulfill() { return state.grid.some((v, i) => i < state.unlockedCells && v === state.currentOrder.tier); }
+    function maybeRepairOrder() {
+      if (state.currentOrder.tier > state.highestDiscoveredTier) {
+        state.currentOrder = createOrder(state.highestDiscoveredTier, state.catalystLevel);
+      }
+    }
+    function gather() {
+      const idx = firstEmpty();
+      if (idx === -1) return;
+      state.grid[idx] = 0;
+      state.gatheredCount += 1;
+      save(); render();
+    }
+    function interact(index) {
+      if (index >= state.unlockedCells) return;
+      const value = state.grid[index];
+      if (value === null) { selectedIndex = null; render(); return; }
+      if (selectedIndex === null) { selectedIndex = index; render(); return; }
+      if (selectedIndex === index) { selectedIndex = null; render(); return; }
+      const selected = state.grid[selectedIndex];
+      if (selected === null) { selectedIndex = index; render(); return; }
+      if (selected !== value) { selectedIndex = index; render(); return; }
+      if (value >= ITEMS.length - 1) { selectedIndex = index; render(); return; }
+      const nextTier = value + 1;
+      state.grid[selectedIndex] = null;
+      state.grid[index] = nextTier;
+      state.mergesCompleted += 1;
+      state.highestDiscoveredTier = Math.max(state.highestDiscoveredTier, nextTier);
+      if (!state.discoveries.includes(nextTier)) state.discoveries.push(nextTier);
+      state.discoveries.sort((a,b) => a-b);
+      selectedIndex = null;
+      maybeRepairOrder();
+      save(); render();
+    }
+    function fulfill() {
+      const idx = state.grid.findIndex((v, i) => i < state.unlockedCells && v === state.currentOrder.tier);
+      if (idx === -1) return;
+      state.grid[idx] = null;
+      state.essence += state.currentOrder.reward;
+      state.ordersCompleted += 1;
+      state.currentOrder = createOrder(Math.max(state.highestDiscoveredTier, 1), state.catalystLevel);
+      save(); render();
+    }
+    function unlockCell() {
+      const cost = unlockCost();
+      if (cost === null || state.essence < cost) return;
+      state.essence -= cost;
+      state.unlockedCells += 1;
+      save(); render();
+    }
+    function upgradeCatalyst() {
+      const cost = catalystCost();
+      if (state.essence < cost) return;
+      state.essence -= cost;
+      state.catalystLevel += 1;
+      state.currentOrder = createOrder(Math.max(state.highestDiscoveredTier, 1), state.catalystLevel);
+      save(); render();
+    }
+
+    document.getElementById('gatherBtn').addEventListener('click', gather);
+    document.getElementById('fulfillBtn').addEventListener('click', fulfill);
+    document.getElementById('unlockBtn').addEventListener('click', unlockCell);
+    document.getElementById('catalystBtn').addEventListener('click', upgradeCatalyst);
+
+    function render() {
+      document.getElementById('essence').textContent = Math.floor(state.essence);
+      document.getElementById('discoveriesCount').textContent = state.discoveries.length;
+      document.getElementById('ordersCompleted').textContent = state.ordersCompleted;
+
+      const order = ITEMS[state.currentOrder.tier];
+      document.getElementById('orderCard').innerHTML = `
+        <div class="order-main">
+          <div class="order-item">
+            <span class="order-emoji">${order.emoji}</span>
+            <div>
+              <strong>${order.name}</strong>
+              <div class="muted">Tier ${order.tier}</div>
+            </div>
+          </div>
+          <div style="font-weight:800;color:#f5c76c;">+${state.currentOrder.reward} essence</div>
+        </div>
+        <div class="muted">Катализатор: ур. ${state.catalystLevel}</div>
+      `;
+
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      for (let i = 0; i < state.grid.length; i++) {
+        const value = state.grid[i];
+        const unlocked = i < state.unlockedCells;
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        if (!unlocked) {
+          btn.classList.add('locked');
+          btn.textContent = '🔒';
+          btn.disabled = true;
+        } else if (value === null) {
+          btn.classList.add('empty');
+          btn.textContent = '+';
+        } else {
+          const item = ITEMS[value];
+          btn.innerHTML = `<div style="font-size:28px">${item.emoji}</div><div style="font-size:13px;font-weight:700">${item.name}</div>`;
+          btn.style.background = `radial-gradient(circle at top, ${item.color}55, transparent 60%), linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.14))`;
+        }
+        if (selectedIndex === i) btn.classList.add('selected');
+        btn.addEventListener('click', () => interact(i));
+        board.appendChild(btn);
+      }
+
+      document.getElementById('boardHint').textContent = selectedIndex === null
+        ? 'Тапни по двум одинаковым элементам, чтобы объединить их.'
+        : 'Выбран элемент — тапни по такому же для merge.';
+
+      const journal = document.getElementById('journal');
+      journal.innerHTML = '';
+      ITEMS.forEach(item => {
+        const found = state.discoveries.includes(item.tier);
+        const el = document.createElement('div');
+        el.className = 'entry' + (found ? '' : ' hidden');
+        el.innerHTML = found ? `<span style="font-size:22px">${item.emoji}</span><span>${item.name}</span>` : '<span style="font-size:22px">❔</span><span>Unknown Formula</span>';
+        journal.appendChild(el);
+      });
+
+      document.getElementById('gatherBtn').disabled = firstEmpty() === -1;
+      document.getElementById('fulfillBtn').disabled = !canFulfill();
+      const uCost = unlockCost();
+      const unlockBtn = document.getElementById('unlockBtn');
+      unlockBtn.disabled = uCost === null || state.essence < uCost;
+      unlockBtn.textContent = uCost === null ? 'Все клетки открыты' : `Открыть клетку (${uCost})`;
+      const cCost = catalystCost();
+      const catalystBtn = document.getElementById('catalystBtn');
+      catalystBtn.disabled = state.essence < cCost;
+      catalystBtn.textContent = `Усилить катализатор (${cCost})`;
+    }
+
+    render();
+  </script>
+</body>
+</html>

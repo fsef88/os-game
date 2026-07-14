@@ -1,0 +1,14 @@
+{
+  "hud.essence": "Эссенция",
+  "hud.discoveries": "Открытия",
+  "hud.orders": "Заказы",
+  "screen.title": "Alchemy Lab",
+  "screen.subtitle": "Собирай ингредиенты, объединяй элементы и выполняй заказы мастерской.",
+  "button.gather": "Собрать ингредиент",
+  "button.fulfill": "Выполнить заказ",
+  "button.unlock": "Открыть клетку",
+  "button.catalyst": "Усилить катализатор",
+  "label.board": "Алхимический стол",
+  "label.order": "Текущий заказ",
+  "label.journal": "Журнал открытий"
+}

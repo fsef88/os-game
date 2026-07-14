@@ -92,8 +92,9 @@
 - `NEXT_TASK.md` — следующий рабочий шаг
 - `MISSING.md` — реальные пробелы
 - `GENRE_STRATEGY.md` — стратегический фокус по жанрам
-- `PILOT_CANDIDATES.md` — shortlist новых перспективных пилотов
-- `90_PROJECTS/SeedClickerMini/` — технический пилот template
+- `PILOT_CANDIDATES.md` — shortlist перспективных пилотов
+- `90_PROJECTS/AlchemyLab/` — текущий активный тематический пилот
+- `90_PROJECTS/SeedClickerMini/` — технический smoke-test template
 
 ## Главный принцип
 

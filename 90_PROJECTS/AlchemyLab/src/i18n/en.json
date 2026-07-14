@@ -1,0 +1,14 @@
+{
+  "hud.essence": "Essence",
+  "hud.discoveries": "Discoveries",
+  "hud.orders": "Orders",
+  "screen.title": "Alchemy Lab",
+  "screen.subtitle": "Gather ingredients, merge elements, and complete workshop orders.",
+  "button.gather": "Gather ingredient",
+  "button.fulfill": "Fulfill order",
+  "button.unlock": "Unlock cell",
+  "button.catalyst": "Upgrade catalyst",
+  "label.board": "Alchemy table",
+  "label.order": "Current order",
+  "label.journal": "Discovery journal"
+}
