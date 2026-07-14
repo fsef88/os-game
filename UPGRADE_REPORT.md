@@ -57,3 +57,8 @@ npm run build
 - реализован микро-clicker end-to-end
 - добавлен пример в `98_EXAMPLES/SeedClickerMini/`
 - добавлен `scripts/check_all.sh` для общей проверки
+
+### 7. Сдвинут продуктовый фокус
+- добавлены `GENRE_STRATEGY.md` и `PILOT_CANDIDATES.md`
+- clicker-пилот переведён в статус технического smoke-test
+- новый стратегический фокус — более интересные thematic-casual пилоты

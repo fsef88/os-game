@@ -83,6 +83,7 @@
 - playbook'и и чек-листы для первого запуска
 - нормализованные role prompts
 - базовая валидация структуры через `scripts/validate_docs.py`
+- стратегический shortlist более интересных genre+theme пилотов
 
 ## Где смотреть текущее состояние
 
@@ -90,7 +91,9 @@
 - `CHANGELOG.md` — история изменений
 - `NEXT_TASK.md` — следующий рабочий шаг
 - `MISSING.md` — реальные пробелы
-- `90_PROJECTS/SeedClickerMini/` — первый пилотный проект
+- `GENRE_STRATEGY.md` — стратегический фокус по жанрам
+- `PILOT_CANDIDATES.md` — shortlist новых перспективных пилотов
+- `90_PROJECTS/SeedClickerMini/` — технический пилот template
 
 ## Главный принцип
 

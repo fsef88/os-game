@@ -23,6 +23,8 @@ Genre → Mechanics → Systems → Components → Project
 - `README.md` — обзор системы
 - `00_CORE/README.md` — точка входа для нового ИИ
 - `PROJECT_STATE.md` — актуальное состояние
+- `GENRE_STRATEGY.md` — куда двигаться по жанрам
+- `PILOT_CANDIDATES.md` — shortlist перспективных пилотов
 
 ## 2. Границы и философия
 
@@ -153,7 +155,7 @@ Genre → Mechanics → Systems → Components → Project
 - `90_PROJECTS/README.md`
 - `90_PROJECTS/TEMPLATE/README.md`
 - `90_PROJECTS/TEMPLATE/src/README.md`
-- `90_PROJECTS/SeedClickerMini/README.md`
+- `90_PROJECTS/SeedClickerMini/README.md` — технический пилот
 - `98_EXAMPLES/SeedClickerMini/README.md`
 - `98_EXAMPLES/MergeFarm/README.md`
 - `98_EXAMPLES/IdleGarden/README.md`
