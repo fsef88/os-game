@@ -31,13 +31,16 @@ export interface AbsorbEvent {
   victory?: boolean;
   boostRefill?: boolean;
   healed?: boolean;
+  shieldGained?: boolean;
   bonus?: boolean;
 }
 
 export interface HeavyHitEvent {
   label: string;
   remainingLives: number;
+  remainingShields: number;
   gameOver: boolean;
+  shieldUsed?: boolean;
 }
 
 export function resetRun() {
@@ -104,6 +107,7 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
   let sizeLevel = current.sizeLevel;
   let districtIndex = current.districtIndex;
   let lives = current.lives;
+  let shieldCharges = current.shieldCharges;
   let lastAbsorbAt = current.lastAbsorbAt;
   let bestCombo = current.bestCombo;
   let bestMass = current.bestMass;
@@ -147,6 +151,7 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
       const scoreGainBase = def.value * 12 + Math.max(0, combo - 1) * 9;
       let scoreGain = scoreGainBase;
       let healed = false;
+      let shieldGained = false;
       let boostRefill = false;
       let bonus = false;
 
@@ -160,6 +165,10 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
       }
       if (effect === 'boost') {
         boostRefill = true;
+      }
+      if (effect === 'shield' && shieldCharges < 2) {
+        shieldCharges += 1;
+        shieldGained = true;
       }
 
       mass += massGain;
@@ -197,6 +206,7 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
         boostRefill,
         healed,
         bonus,
+        shieldGained,
       });
 
       const busRushActive = districtIndex === 2 && sizeLevel >= 5;
@@ -208,13 +218,18 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
       object.x -= (dx / distance) * 14 * dt;
       object.y -= (dy / distance) * 14 * dt;
       if (Date.now() - lastHeavyHitAt > 1000) {
-        lives -= 1;
         combo = 0;
         lastHeavyHitAt = Date.now();
-        gameOver = lives <= 0;
-        heavyHit = { label: def.label, remainingLives: Math.max(0, lives), gameOver };
+        if (shieldCharges > 0) {
+          shieldCharges -= 1;
+          heavyHit = { label: def.label, remainingLives: Math.max(0, lives), remainingShields: shieldCharges, gameOver: false, shieldUsed: true };
+        } else {
+          lives -= 1;
+          gameOver = lives <= 0;
+          heavyHit = { label: def.label, remainingLives: Math.max(0, lives), remainingShields: shieldCharges, gameOver };
+          if (gameOver) track.lose(mass);
+        }
         track.heavyHit(def.label);
-        if (gameOver) track.lose(mass);
       }
     }
   }
@@ -231,6 +246,7 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
     bestCombo,
     lastAbsorbAt,
     lives,
+    shieldCharges,
     gameOver,
     victory,
     lastHeavyHitAt,

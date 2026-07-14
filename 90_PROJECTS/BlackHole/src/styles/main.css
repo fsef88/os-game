@@ -222,3 +222,9 @@ body { min-height: 100vh; }
 
 .hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
 .tutorial-card { max-width: 560px; }
+
+.scene-card.convoy-mode { box-shadow: 0 0 0 2px rgba(255,122,122,.18), 0 0 44px rgba(255,122,122,.14), 0 20px 42px rgba(0,0,0,.26); }
+.hole-core.shielded { box-shadow: 0 0 0 10px rgba(125,189,255,.18), 0 0 0 6px rgba(127,214,255,.16), 0 0 46px rgba(127,214,255,.24), inset 0 -8px 18px rgba(255,255,255,.04); }
+
+.combo-meter { width: 180px; display:grid; gap:6px; }
+.combo-bar-fill { height:100%; width:0%; background: linear-gradient(90deg,#ff7a7a 0%, #f6cf74 100%); }

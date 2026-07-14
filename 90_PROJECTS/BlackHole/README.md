@@ -1,7 +1,7 @@
 # Black Hole
 
 **Жанр:** arcade growth / black hole toy  
-**Версия:** 1.0.0  
+**Версия:** 1.2.0  
 **Статус:** active toy-first pilot
 
 ## Что это
@@ -50,6 +50,7 @@ npm run dev
 - floating reward popups и impact-feedback;
 - onboarding первого запуска и кнопка `Как играть`;
 - event-driven pressure (`Гравитационный шторм`, `Звёздный дождь`, полиция);
+- combo meter для лучшей читаемости темпа;
 - локальный save текущего раннего прогресса.
 
 ## Документация

@@ -1,5 +1,5 @@
-export const VERSION = '1.0.0';
-export const BUILD = '2026-07-14-black-hole-v10';
+export const VERSION = '1.2.0';
+export const BUILD = '2026-07-14-black-hole-v12';
 
 export const ARENA_WIDTH = 1040;
 export const ARENA_HEIGHT = 620;
@@ -31,6 +31,7 @@ export const OBJECT_TYPES = {
   crate: { id: 'crate', label: 'Коробка', emoji: '📦', tier: 1, radius: 20, value: 4, color: '#f0b36b', effect: 'none' },
   star: { id: 'star', label: 'Звезда', emoji: '⭐', tier: 1, radius: 18, value: 6, color: '#ffe66d', effect: 'bonus' },
   heart: { id: 'heart', label: 'Сердце', emoji: '❤️', tier: 1, radius: 18, value: 1, color: '#ff7b89', effect: 'heal' },
+  shield: { id: 'shield', label: 'Щит', emoji: '🛡️', tier: 1, radius: 18, value: 1, color: '#7dbdff', effect: 'shield' },
   cone: { id: 'cone', label: 'Конус', emoji: '🚧', tier: 2, radius: 20, value: 5, color: '#ff9f43', effect: 'none' },
   scooter: { id: 'scooter', label: 'Скутер', emoji: '🛴', tier: 2, radius: 24, value: 8, color: '#7bdff2', effect: 'none' },
   core: { id: 'core', label: 'Ядро рывка', emoji: '🌀', tier: 2, radius: 20, value: 4, color: '#7aa2ff', effect: 'boost' },
@@ -44,7 +45,7 @@ export type ObjectTypeId = keyof typeof OBJECT_TYPES;
 export type ObjectEffect = (typeof OBJECT_TYPES)[ObjectTypeId]['effect'];
 
 export const DISTRICT_POOLS: Record<number, ObjectTypeId[]> = {
-  0: ['coin', 'coin', 'crate', 'crate', 'star', 'cone', 'scooter', 'heart'],
-  1: ['coin', 'crate', 'star', 'cone', 'scooter', 'scooter', 'car', 'core', 'heart'],
-  2: ['crate', 'star', 'cone', 'scooter', 'car', 'taxi', 'bus', 'core', 'police'],
+  0: ['coin', 'coin', 'crate', 'crate', 'star', 'cone', 'scooter', 'heart', 'shield'],
+  1: ['coin', 'crate', 'star', 'cone', 'scooter', 'scooter', 'car', 'core', 'heart', 'shield'],
+  2: ['crate', 'star', 'cone', 'scooter', 'car', 'taxi', 'bus', 'core', 'police', 'shield'],
 };

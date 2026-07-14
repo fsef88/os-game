@@ -25,6 +25,7 @@ export interface GameState {
   districtIndex: number;
   absorbedCount: number;
   lives: number;
+  shieldCharges: number;
   gameOver: boolean;
   victory: boolean;
   lastHeavyHitAt: number;
@@ -69,6 +70,7 @@ export function createInitialState(now = Date.now()): GameState {
     districtIndex: 0,
     absorbedCount: 0,
     lives: START_LIVES,
+    shieldCharges: 0,
     gameOver: false,
     victory: false,
     lastHeavyHitAt: 0,

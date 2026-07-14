@@ -32,6 +32,7 @@ let hitSceneUntil = 0;
 let districtBannerText = '';
 let districtBannerUntil = 0;
 let gravityStormUntil = 0;
+let convoyUntil = 0;
 let runStartedAt = Date.now();
 let sceneShakeUntil = 0;
 let popupId = 1;
@@ -62,6 +63,7 @@ export function initBlackHoleGame(container: HTMLElement) {
       <div class="hud-pill">🔥 Комбо <strong id="hud-combo">0</strong></div>
       <div class="hud-pill">🗺 Район <strong id="hud-district">Двор</strong></div>
       <div class="hud-pill">❤ Жизни <strong id="hud-lives">3</strong></div>
+      <div class="hud-pill">🛡️ Щит <strong id="hud-shield">0</strong></div>
       <div class="hud-pill">⏱ Время <strong id="hud-time">0:00</strong></div>
     </div>
 
@@ -101,6 +103,7 @@ export function initBlackHoleGame(container: HTMLElement) {
         <div id="combo-rush" class="tip-chip hidden">COMBO RUSH</div>
         <div id="storm-chip" class="tip-chip hidden">ГРАВИТАЦИОННЫЙ ШТОРМ</div>
         <div id="star-chip" class="tip-chip hidden">ЗВЁЗДНЫЙ ДОЖДЬ</div>
+        <div id="convoy-chip" class="tip-chip hidden">КОНВОЙ</div>
         <div class="tip-chip">WASD / мышь / тач</div>
       </div>
     </div>
@@ -136,6 +139,7 @@ export function initBlackHoleGame(container: HTMLElement) {
     restartRunPreservingMeta();
     resetBoost();
     gravityStormUntil = 0;
+    convoyUntil = 0;
     runStartedAt = Date.now();
     showToast('Новый ран начался.', 'info');
   });
@@ -213,7 +217,8 @@ function loop(now: number) {
   const movement = getMovementVector(current.holeX, current.holeY);
   const elapsedSec = Math.max(0, Math.floor((Date.now() - runStartedAt) / 1000));
   const starShowerActive = elapsedSec > 0 && elapsedSec % STAR_SHOWER_INTERVAL_SEC >= STAR_SHOWER_INTERVAL_SEC - STAR_SHOWER_DURATION_SEC;
-  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil, Date.now() < gravityStormUntil, starShowerActive);
+  const convoyActive = Date.now() < convoyUntil;
+  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil, Date.now() < gravityStormUntil, starShowerActive || convoyActive);
 
   if (result.absorbed.length > 0) {
     const latest = result.absorbed[result.absorbed.length - 1];
@@ -238,6 +243,8 @@ function loop(now: number) {
       showToast('Гравитационный шторм!', 'success');
     } else if (latest.healed) {
       showToast('Сердце восстановило 1 жизнь.', 'success');
+    } else if (latest.shieldGained) {
+      showToast('Щит заряжен.', 'success');
     } else if (latest.bonus) {
       showToast('Бонусная звезда! Дополнительные очки.', 'success');
     } else if (latest.combo >= 3) {
@@ -299,12 +306,14 @@ function renderScene() {
   const gravityStormActive = now < gravityStormUntil;
   const elapsedSec = Math.max(0, Math.floor((now - runStartedAt) / 1000));
   const starShowerActive = elapsedSec > 0 && elapsedSec % STAR_SHOWER_INTERVAL_SEC >= STAR_SHOWER_INTERVAL_SEC - STAR_SHOWER_DURATION_SEC;
+  const convoyActive = state.get().districtIndex === 2 && state.get().sizeLevel >= 5 && now < convoyUntil;
 
   setText('hud-mass', String(Math.floor(current.mass)));
   setText('hud-score', String(Math.floor(current.score)));
   setText('hud-combo', String(current.combo));
   setText('hud-district', district.name);
   setText('hud-lives', String(current.lives));
+  setText('hud-shield', String(current.shieldCharges));
   setText('hud-time', formatTime(elapsedSec));
   setText('best-mass', String(Math.floor(current.bestMass)));
   setText('best-combo', String(current.bestCombo));
@@ -328,7 +337,7 @@ function renderScene() {
       <div class="panel-title">${district.name}</div>
       <div class="panel-text">${district.goal}</div>
       <div class="panel-subtext">Сильный ход: сначала собирай безопасные объекты, потом переходи на более крупные цели. Во время звёздного дождя охоться на бонусные звёзды.</div>
-      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : gravityStormActive ? 'Шторм притяжения активен' : starShowerActive ? 'Звёздный дождь идёт' : 'Район под контролем'}</div>
+      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : convoyActive ? 'Конвой начался' : gravityStormActive ? 'Шторм притяжения активен' : starShowerActive ? 'Звёздный дождь идёт' : 'Район под контролем'}</div>
     `;
   }
 
@@ -339,7 +348,7 @@ function renderScene() {
       <div class="panel-title">${getCurrentGoalText(current)}</div>
       <div class="target-progress">${progress.next ? `${Math.floor(progress.current)} / ${progress.next}` : 'цель достигнута'}</div>
       <div class="target-bar"><div class="target-bar-fill" style="width:${progress.ratio * 100}%"></div></div>
-      <div class="target-foot">${current.sizeLevel >= 5 && district.id === 2 ? 'Конвой запущен: автобусы и полиция стали заметно чаще.' : 'Финальный ориентир: автобус. Слишком крупные объекты опасны, пока уровень размера не позволяет их съесть.'}</div>
+      <div class="target-foot">${current.sizeLevel >= 5 && district.id === 2 ? 'Финальная стадия: в любой момент может начаться конвой из такси, автобусов и полиции.' : 'Финальный ориентир: автобус. Слишком крупные объекты опасны, пока уровень размера не позволяет их съесть.'}</div>
     `;
   }
 
@@ -354,6 +363,8 @@ function renderScene() {
   const comboRush = document.getElementById('combo-rush');
   const stormChip = document.getElementById('storm-chip');
   const starChip = document.getElementById('star-chip');
+  const convoyChip = document.getElementById('convoy-chip');
+  const comboBar = document.getElementById('combo-bar-fill');
   if (boostFill) {
     const ratio = now < boostCooldownUntil
       ? 1 - Math.max(0, (boostCooldownUntil - now) / BOOST_COOLDOWN_MS)
@@ -378,6 +389,13 @@ function renderScene() {
   if (starChip) {
     starChip.classList.toggle('hidden', !starShowerActive);
   }
+  if (convoyChip) {
+    convoyChip.classList.toggle('hidden', !convoyActive);
+  }
+  if (comboBar) {
+    const comboRatio = current.combo > 0 ? Math.max(0, 1 - (now - current.lastAbsorbAt) / 1500) : 0;
+    comboBar.style.width = `${comboRatio * 100}%`;
+  }
 
   const arena = document.getElementById('arena');
   const popupLayer = document.getElementById('popup-layer');
@@ -395,6 +413,7 @@ function renderScene() {
   hole.style.height = `${holeRadius * 2}px`;
   hole.style.left = `${current.holeX - holeRadius}px`;
   hole.style.top = `${current.holeY - holeRadius}px`;
+  hole.classList.toggle('shielded', current.shieldCharges > 0);
 
   const objectMap = new Map<string, number>();
   current.objects.forEach((object) => {
@@ -426,6 +445,12 @@ function renderScene() {
 
   const bossTarget = document.getElementById('boss-target');
   if (bossTarget) {
+    if (state.get().districtIndex === 2 && state.get().sizeLevel >= 5 && now >= convoyUntil) {
+      convoyUntil = now + 6000;
+      districtBannerText = 'КОНВОЙ';
+      districtBannerUntil = now + 1200;
+      showToast('На проспекте начался конвой!', 'danger');
+    }
     const busObject = current.objects.find((object) => object.typeId === 'bus');
     const showBoss = Boolean(busObject);
     bossTarget.classList.toggle('hidden', !showBoss);
@@ -494,6 +519,7 @@ function renderOverlay() {
     restartRunPreservingMeta();
     resetBoost();
     gravityStormUntil = 0;
+    convoyUntil = 0;
     runStartedAt = Date.now();
     showToast('Новый ран начался.', 'info');
   });
