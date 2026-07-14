@@ -1,6 +1,6 @@
 # ANALYTICS
 
-**Версия:** 0.2.0
+**Версия:** 1.0.0
 
 ## Основные события
 
@@ -11,9 +11,12 @@
 - ingredient_gathered
 - merge_success
 - order_completed
-- cell_unlocked
-- catalyst_upgraded
+- special_contract_completed
 - discovery_unlocked
+- mission_claimed
+- daily_claimed
+- catalyst_upgraded
+- cell_unlocked
 
 ## KPI пилота
 
@@ -24,7 +27,9 @@
 | Discoveries in first session | 3+ |
 | Session length | 3-8 min |
 | Orders completed in first session | 2+ |
+| Mission claim in first session | 1+ |
+| Daily reward claim visibility | 100% on available sessions |
 
 ## Зачем аналитика
 
-Нужно понять, работает ли discovery-fantasy лучше простого progression-through-numbers.
+Нужно проверить, работает ли fantasy discovery + orders + missions лучше, чем голый merge loop.

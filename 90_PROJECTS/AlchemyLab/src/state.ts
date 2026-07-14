@@ -6,6 +6,7 @@ export interface Order {
   id: number;
   tier: number;
   reward: number;
+  kind: 'regular' | 'special';
 }
 
 export interface GameState {
@@ -15,11 +16,17 @@ export interface GameState {
   unlockedCells: number;
   grid: Array<number | null>;
   currentOrder: Order;
+  specialContract: Order | null;
   highestDiscoveredTier: number;
   discoveries: number[];
   ordersCompleted: number;
+  specialOrdersCompleted: number;
   mergesCompleted: number;
   gatheredCount: number;
+  claimedMissionIds: string[];
+  dailyDay: number;
+  dailyLastClaim: number;
+  dailyStreak: number;
   sessionCount: number;
   totalPlayTime: number;
   firstSeen: number;
@@ -80,12 +87,19 @@ export function createInitialState(now = Date.now()): GameState {
       id: 1,
       tier: 1,
       reward: 12,
+      kind: 'regular',
     },
+    specialContract: null,
     highestDiscoveredTier: 0,
     discoveries: [0],
     ordersCompleted: 0,
+    specialOrdersCompleted: 0,
     mergesCompleted: 0,
     gatheredCount: 0,
+    claimedMissionIds: [],
+    dailyDay: 1,
+    dailyLastClaim: 0,
+    dailyStreak: 0,
     sessionCount: 0,
     totalPlayTime: 0,
     firstSeen: now,
@@ -107,6 +121,8 @@ export function hydrateState(partial: Partial<GameState>) {
     ...partial,
     grid: nextGrid,
     discoveries: partial.discoveries && partial.discoveries.length > 0 ? partial.discoveries : base.discoveries,
+    claimedMissionIds: partial.claimedMissionIds || [],
+    specialContract: partial.specialContract ?? null,
   });
 }
 

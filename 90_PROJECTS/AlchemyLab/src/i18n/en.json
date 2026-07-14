@@ -1,16 +1,3 @@
 {
-  "hud.essence": "Essence",
-  "hud.discoveries": "Discoveries",
-  "hud.orders": "Orders",
-  "screen.title": "Alchemy Lab",
-  "screen.subtitle": "A clear merge prototype: create Spark, merge matching elements, and complete your first workshop order.",
-  "button.gather": "Create Spark",
-  "button.fulfill": "Fulfill order",
-  "button.unlock": "Unlock cell",
-  "button.catalyst": "Upgrade catalyst",
-  "label.board": "Alchemy table",
-  "label.order": "Current order",
-  "label.journal": "Discovery journal",
-  "label.recipes": "Quick recipes",
-  "label.objective": "What to do now"
+  "language": "ru-forced"
 }

@@ -3,52 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Alchemy Lab v0.2</title>
+  <title>Алхимическая мастерская 1.0</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       min-height: 100%;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(circle at top, rgba(96,102,190,.25), transparent 30%), linear-gradient(180deg,#0f1228 0%, #14193a 100%);
+      background: radial-gradient(circle at top, rgba(75,88,170,.35), transparent 35%), linear-gradient(180deg,#0f1228 0%, #14193a 100%);
       color: #fff;
     }
     body { padding: 16px; }
-    .app { max-width: 1120px; margin: 0 auto; }
+    .app { max-width: 1180px; margin: 0 auto; }
     .hud, .panel { background: rgba(32,37,77,.92); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; box-shadow: 0 18px 36px rgba(0,0,0,.24); }
     .hud { position: sticky; top: 0; padding: 12px 14px; margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; z-index: 10; }
     .chip { background: rgba(255,255,255,.08); border-radius: 999px; padding: 8px 12px; font-weight: 800; }
     .panel { padding: 20px; }
     .hero { display: grid; gap: 18px; margin-bottom: 16px; }
     .eyebrow { color: #f5c76c; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
-    h1 { font-size: 34px; }
-    .subtitle { max-width: 720px; line-height: 1.5; opacity: .86; }
-    .objective-layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
-    .objective-card, .recipes-card, .order-card { background: rgba(255,255,255,.06); border-radius: 18px; padding: 16px; }
+    h1 { font-size: 36px; }
+    .subtitle { max-width: 780px; line-height: 1.55; opacity: .86; }
+    .objective-layout { display: grid; grid-template-columns: 1.2fr 1fr 0.9fr; gap: 14px; }
+    .objective-card, .recipes-card, .daily-card, .order-card, .special-card, .mission-card { background: rgba(255,255,255,.06); border-radius: 18px; padding: 16px; }
     .objective-eyebrow, .recipes-header { display: inline-block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #f5c76c; margin-bottom: 10px; }
     .objective-card h3 { font-size: 22px; margin-bottom: 8px; }
     .objective-card p { line-height: 1.5; margin-bottom: 10px; }
     .objective-card ul { display: grid; gap: 8px; padding-left: 18px; }
-    .recipe-rail, .stack, .journal { display: grid; gap: 10px; }
+    .recipe-rail, .side-stack, .right-stack, .journal, .missions, .board-status { display: grid; gap: 10px; }
     .recipe-chip { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; background: rgba(255,255,255,.05); }
     .recipe-part { font-size: 13px; font-weight: 700; }
     .recipe-part.target { color: #f5c76c; }
     .recipe-arrow { opacity: .65; font-size: 13px; }
-    .actions, .compact-actions, .board-status { display: flex; gap: 12px; flex-wrap: wrap; }
+    .daily-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .actions, .compact-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     button { border: 0; border-radius: 14px; min-height: 48px; padding: 12px 18px; font-size: 16px; font-weight: 800; cursor: pointer; transition: transform .1s ease, opacity .1s ease, box-shadow .12s ease; }
     .gold { color: #1f1600; background: linear-gradient(180deg,#f5c76c 0%, #e5a94b 100%); }
-    .secondary { color: #fff; background: rgba(255,255,255,.12); }
+    .secondary, .mission-claim.secondary { color: #fff; background: rgba(255,255,255,.12); }
     button:disabled { opacity: .45; cursor: not-allowed; }
     button.focus { box-shadow: 0 0 0 3px rgba(245,199,108,.32), 0 0 24px rgba(245,199,108,.24); }
-    .layout { display: grid; grid-template-columns: 1.1fr 1.3fr 1fr; gap: 16px; }
+    .layout { display: grid; grid-template-columns: 1.05fr 1.2fr 1fr; gap: 16px; }
     .panel-header { display:flex; justify-content:space-between; gap:12px; align-items:baseline; margin-bottom: 14px; }
     .muted { opacity: .72; }
     .summary-chip { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.07); font-size: 13px; font-weight: 700; }
-    .order-main { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .order-main, .mission-top { display:flex; justify-content:space-between; gap:12px; align-items:center; }
     .order-item { display:flex; gap:12px; align-items:center; }
-    .order-emoji { font-size:28px; }
-    .order-reward { font-weight: 800; color: #f5c76c; }
-    .order-progress { padding:10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-weight:700; }
-    .order-progress.ready { background: rgba(141,229,125,.16); box-shadow: inset 0 0 0 1px rgba(141,229,125,.24); }
+    .order-emoji { font-size: 28px; }
+    .order-reward, .mission-reward { font-weight: 800; color: #f5c76c; }
+    .order-reward.special { color: #d8a8ff; }
+    .order-progress, .mission-progress { padding:10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-weight:700; }
+    .order-progress.ready, .mission-done .mission-progress { background: rgba(141,229,125,.16); box-shadow: inset 0 0 0 1px rgba(141,229,125,.24); }
     .formula-line { color:#f5c76c; font-weight:700; }
     .board { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; }
     .cell { min-height:118px; border-radius:16px; display:grid; gap:8px; place-content:center; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.14)); border:2px solid transparent; color:#fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
@@ -59,32 +61,32 @@
     .cell.flash { animation: mergeFlash .48s ease-out; }
     .entry { background: rgba(255,255,255,.06); border-radius:14px; padding:12px; display:flex; gap:12px; align-items:center; }
     .entry.hidden { opacity:.45; }
-    .journal-name { font-weight:800; margin-bottom:4px; }
-    .toast-wrap { position: sticky; top: 74px; z-index: 15; display:flex; justify-content:center; min-height: 0; pointer-events:none; }
+    .journal-name, .mission-title { font-weight:800; margin-bottom:4px; }
+    .toast-wrap { position: sticky; top: 74px; z-index: 15; display:flex; justify-content:center; min-height:0; pointer-events:none; }
     .toast { padding: 10px 16px; border-radius: 999px; font-weight: 800; box-shadow: 0 16px 28px rgba(0,0,0,.28); }
     .toast.info { background: rgba(127,213,255,.18); border: 1px solid rgba(127,213,255,.45); }
     .toast.success { background: rgba(141,229,125,.16); border: 1px solid rgba(141,229,125,.42); }
     .toast.magic { background: rgba(216,168,255,.16); border: 1px solid rgba(216,168,255,.42); }
     @keyframes mergeFlash { 0% { transform: scale(.94); box-shadow: 0 0 0 0 rgba(245,199,108,.45); } 60% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(245,199,108,0); } 100% { transform: scale(1); } }
-    @media (max-width: 980px) { .objective-layout, .layout { grid-template-columns: 1fr; } }
-    @media (max-width: 640px) { h1 { font-size: 28px; } .order-main { flex-direction: column; align-items: flex-start; } .cell { min-height: 96px; } }
+    @media (max-width: 1080px) { .objective-layout, .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { h1 { font-size: 28px; } .order-main, .mission-top { flex-direction: column; align-items: flex-start; } .cell { min-height: 96px; } }
   </style>
 </head>
 <body>
   <div class="app">
     <div id="toastWrap" class="toast-wrap"></div>
-
     <div class="hud">
       <div class="chip">✨ Эссенция: <span id="essence">0</span></div>
-      <div class="chip">📘 Открытия: <span id="discoveriesCount">1</span></div>
+      <div class="chip">📘 Открытия: <span id="discoveriesCount">0</span></div>
       <div class="chip">📜 Заказы: <span id="ordersCompleted">0</span></div>
+      <div class="chip">🧪 Уровень лаборатории: <span id="labLevel">1</span></div>
     </div>
 
     <section class="panel hero">
       <div>
-        <div class="eyebrow">Product Pilot v0.2</div>
-        <h1>Alchemy Lab</h1>
-        <p class="subtitle">Понятный merge-прототип: создай Spark, соедини одинаковые элементы, выполни первый заказ и потрать первую essence на развитие лаборатории.</p>
+        <div class="eyebrow">Автономный пилот 1.0</div>
+        <h1>Алхимическая мастерская</h1>
+        <p class="subtitle">Собирай искры, объединяй одинаковые элементы, выполняй обычные и особые заказы, открывай формулы и развивай лабораторию. Всё прямо здесь, без npm и без dev-server.</p>
       </div>
 
       <div class="objective-layout">
@@ -93,25 +95,36 @@
           <div class="recipes-header">Быстрые рецепты</div>
           <div id="recipeRail" class="recipe-rail"></div>
         </div>
+        <div id="dailyCard" class="daily-card"></div>
       </div>
 
       <div class="actions">
-        <button id="gatherBtn" class="gold">Создать Spark</button>
+        <button id="gatherBtn" class="gold">Создать искру</button>
         <button id="fulfillBtn" class="secondary">Сдать заказ</button>
+        <button id="specialBtn" class="secondary">Сдать особый контракт</button>
       </div>
     </section>
 
     <section class="layout">
-      <div class="panel stack">
-        <h2>Текущий заказ</h2>
-        <div id="orderCard" class="order-card"></div>
-        <div class="compact-actions">
-          <button id="unlockBtn" class="secondary">Открыть клетку</button>
-          <button id="catalystBtn" class="secondary">Усилить катализатор</button>
+      <div class="panel side-stack">
+        <div>
+          <h2>Текущий заказ</h2>
+          <div id="orderCard" class="order-card"></div>
+        </div>
+        <div>
+          <h2>Особый контракт</h2>
+          <div id="specialCard" class="special-card"></div>
+        </div>
+        <div>
+          <h2>Улучшения</h2>
+          <div class="compact-actions">
+            <button id="unlockBtn" class="secondary">Открыть клетку</button>
+            <button id="catalystBtn" class="secondary">Усилить катализатор</button>
+          </div>
         </div>
       </div>
 
-      <div class="panel stack">
+      <div class="panel">
         <div class="panel-header">
           <h2>Алхимический стол</h2>
           <span id="boardHint" class="muted"></span>
@@ -120,29 +133,42 @@
         <div id="board" class="board"></div>
       </div>
 
-      <div class="panel stack">
-        <h2>Журнал открытий</h2>
-        <div id="journal" class="journal"></div>
+      <div class="panel right-stack">
+        <div>
+          <h2>Журнал открытий</h2>
+          <div id="journal" class="journal"></div>
+        </div>
+        <div>
+          <h2>Поручения алхимика</h2>
+          <div id="missions" class="missions"></div>
+        </div>
       </div>
     </section>
   </div>
 
   <script>
-    const KEY = 'alchemy_lab_standalone_save_v2';
+    const KEY = 'alchemy_lab_standalone_save_v10';
+    const CONFIG = { startingUnlockedCells: 6, unlockCellCosts: [12,28,55], catalystBaseCost: 16, catalystCostGrowth: 1.85, catalystRewardBonus: .25, dailyClaimWindowHours: 20 };
     const ITEMS = [
-      { tier: 0, name: 'Spark', emoji: '✨', color: '#f7d774', description: 'Базовая искра для старта любого рецепта.' },
-      { tier: 1, name: 'Glow Herb', emoji: '🌿', color: '#8de57d', description: 'Первый живой ингредиент лаборатории.' },
-      { tier: 2, name: 'Moon Bloom', emoji: '🌸', color: '#d8a8ff', description: 'Магический цветок для редких заказов.' },
-      { tier: 3, name: 'Aether Crystal', emoji: '💎', color: '#7fd5ff', description: 'Кристалл чистой алхимической энергии.' },
-      { tier: 4, name: 'Sun Elixir', emoji: '🧪', color: '#ffbe6b', description: 'Главное зелье MVP-цепочки.' }
+      { tier: 0, name: 'Искра', emoji: '✨', color: '#f7d774', description: 'Базовый элемент для всех первых рецептов.' },
+      { tier: 1, name: 'Свет-трава', emoji: '🌿', color: '#8de57d', description: 'Первый живой ингредиент лаборатории.' },
+      { tier: 2, name: 'Лунный цветок', emoji: '🌸', color: '#d8a8ff', description: 'Редкий алхимический цветок для сильных заказов.' },
+      { tier: 3, name: 'Эфирный кристалл', emoji: '💎', color: '#7fd5ff', description: 'Кристалл концентрированной алхимической силы.' },
+      { tier: 4, name: 'Солнечный эликсир', emoji: '🧪', color: '#ffbe6b', description: 'Главное зелье вертикального среза.' }
     ];
     const ORDER_REWARDS = { 1: 12, 2: 28, 3: 65, 4: 150 };
-    const unlockCosts = [12, 28, 55];
+    const DAILY_REWARDS = [8,12,18,25,40,65,100];
+    const MISSIONS = [
+      { id: 'mission_first_merge', title: 'Первое слияние', description: 'Сделай 1 merge', reward: 8, target: 1 },
+      { id: 'mission_two_orders', title: 'Первые заказы', description: 'Выполни 2 заказа', reward: 18, target: 2 },
+      { id: 'mission_three_discoveries', title: 'Журнал алхимика', description: 'Открой 3 формулы', reward: 25, target: 3 },
+      { id: 'mission_special_contract', title: 'Особый контракт', description: 'Выполни 1 особый заказ', reward: 40, target: 1 },
+    ];
     const gridSize = 9;
     let selectedIndex = null;
     let flashCellIndex = null;
-    let toastTimer = null;
     let toastState = null;
+    let toastTimer = null;
 
     function createInitialState() {
       const grid = Array.from({ length: gridSize }, () => null);
@@ -150,14 +176,20 @@
       return {
         essence: 0,
         catalystLevel: 0,
-        unlockedCells: 6,
+        unlockedCells: CONFIG.startingUnlockedCells,
         grid,
-        currentOrder: { id: 1, tier: 1, reward: 12 },
+        currentOrder: { id: 1, tier: 1, reward: 12, kind: 'regular' },
+        specialContract: null,
         highestDiscoveredTier: 0,
         discoveries: [0],
         ordersCompleted: 0,
+        specialOrdersCompleted: 0,
         mergesCompleted: 0,
-        gatheredCount: 0
+        gatheredCount: 0,
+        claimedMissionIds: [],
+        dailyDay: 1,
+        dailyLastClaim: 0,
+        dailyStreak: 0
       };
     }
 
@@ -165,46 +197,84 @@
       try {
         const raw = localStorage.getItem(KEY);
         if (!raw) return createInitialState();
-        const parsed = JSON.parse(raw);
-        return { ...createInitialState(), ...parsed };
+        return { ...createInitialState(), ...JSON.parse(raw) };
       } catch { return createInitialState(); }
     }
 
     const state = load();
 
     function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
-    function catalystMultiplier() { return 1 + state.catalystLevel * 0.25; }
-    function catalystCost() { return Math.round(16 * Math.pow(1.85, state.catalystLevel)); }
-    function unlockCost() { return unlockCosts[state.unlockedCells - 6] ?? null; }
-    function firstEmpty() { for (let i = 0; i < state.unlockedCells; i++) if (state.grid[i] === null) return i; return -1; }
-    function countTier(tier) { return state.grid.filter((value, index) => index < state.unlockedCells && value === tier).length; }
-    function orderProgress() { const have = countTier(state.currentOrder.tier); return { have, need: 1, completed: have >= 1 }; }
-    function canFulfill() { return orderProgress().completed; }
-    function createOrder(highestTier, catalystLevel) {
-      const maxTier = Math.max(1, Math.min(highestTier, ITEMS.length - 1));
-      const minTier = Math.max(1, maxTier - 1);
-      const tier = maxTier === 1 ? 1 : Math.floor(Math.random() * (maxTier - minTier + 1)) + minTier;
-      const reward = Math.round((ORDER_REWARDS[tier] || 12) * (1 + catalystLevel * 0.25));
-      return { id: Date.now() + Math.random(), tier, reward };
-    }
     function showToast(text, tone) {
       toastState = { text, tone };
       renderToast();
       if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(() => { toastState = null; renderToast(); }, 1700);
     }
-    function maybeRepairOrder() {
-      if (state.currentOrder.tier > state.highestDiscoveredTier) {
-        state.currentOrder = createOrder(state.highestDiscoveredTier, state.catalystLevel);
-      }
+    function renderToast() {
+      document.getElementById('toastWrap').innerHTML = toastState ? `<div class="toast ${toastState.tone}">${toastState.text}</div>` : '';
+    }
+    function catalystMultiplier(level = state.catalystLevel) { return 1 + level * CONFIG.catalystRewardBonus; }
+    function catalystCost(level = state.catalystLevel) { return Math.round(CONFIG.catalystBaseCost * Math.pow(CONFIG.catalystCostGrowth, level)); }
+    function unlockCost() { return CONFIG.unlockCellCosts[state.unlockedCells - CONFIG.startingUnlockedCells] ?? null; }
+    function labLevel() { return 1 + state.ordersCompleted + state.specialOrdersCompleted + Math.max(0, state.discoveries.length - 1); }
+    function firstEmpty() { for (let i = 0; i < state.unlockedCells; i++) if (state.grid[i] === null) return i; return -1; }
+    function countTier(tier) { return state.grid.filter((value, index) => index < state.unlockedCells && value === tier).length; }
+    function orderProgress() { const have = countTier(state.currentOrder.tier); return { have, need: 1, completed: have >= 1 }; }
+    function specialProgress() { if (!state.specialContract) return { active: false, have: 0, need: 0, completed: false }; const have = countTier(state.specialContract.tier); return { active: true, have, need: 1, completed: have >= 1 }; }
+    function rareSpawnChance() { if (state.catalystLevel <= 0 || state.ordersCompleted <= 0) return 0; return Math.min(.12 + state.catalystLevel * .04, .28); }
+    function canClaimDaily() { if (state.dailyLastClaim === 0) return true; return ((Date.now() - state.dailyLastClaim) / 1000 / 3600) >= CONFIG.dailyClaimWindowHours; }
+    function currentDailyReward() { return { day: state.dailyDay, reward: DAILY_REWARDS[(state.dailyDay - 1) % DAILY_REWARDS.length] }; }
+    function createOrder(maxDiscoveredTier, catalystLevel, kind = 'regular') {
+      const maxTier = Math.max(1, Math.min(maxDiscoveredTier, ITEMS.length - 1));
+      const minTier = kind === 'special' ? Math.max(2, maxTier - 1) : Math.max(1, maxTier - 1);
+      const tier = maxTier <= minTier ? minTier : Math.floor(Math.random() * (maxTier - minTier + 1)) + minTier;
+      const kindMultiplier = kind === 'special' ? 2.4 : 1;
+      const reward = Math.round((ORDER_REWARDS[tier] || 12) * catalystMultiplier(catalystLevel) * kindMultiplier);
+      return { id: Date.now() + Math.random(), tier, reward, kind };
+    }
+    function ensureSpecialContract() {
+      if (state.specialContract) return;
+      if (state.ordersCompleted < 2 || state.highestDiscoveredTier < 2) return;
+      state.specialContract = createOrder(state.highestDiscoveredTier, state.catalystLevel, 'special');
+    }
+    function missionViews() {
+      const metric = {
+        mission_first_merge: state.mergesCompleted,
+        mission_two_orders: state.ordersCompleted,
+        mission_three_discoveries: Math.max(0, state.discoveries.length - 1),
+        mission_special_contract: state.specialOrdersCompleted,
+      };
+      return MISSIONS.map(m => ({ ...m, progress: Math.min(metric[m.id], m.target), completed: metric[m.id] >= m.target, claimed: state.claimedMissionIds.includes(m.id) }));
+    }
+    function claimMission(id) {
+      const mission = missionViews().find(m => m.id === id);
+      if (!mission || !mission.completed || mission.claimed) return;
+      state.essence += mission.reward;
+      state.claimedMissionIds.push(id);
+      save();
+      showToast(`Поручение закрыто: +${mission.reward} эссенции`, 'success');
+      render();
+    }
+    function claimDaily() {
+      if (!canClaimDaily()) return;
+      const { day, reward } = currentDailyReward();
+      state.essence += reward;
+      state.dailyLastClaim = Date.now();
+      state.dailyDay += 1;
+      state.dailyStreak += 1;
+      save();
+      showToast(`Бонус дня ${day}: +${reward} эссенции`, 'success');
+      render();
     }
     function gather() {
       const idx = firstEmpty();
       if (idx === -1) return;
-      state.grid[idx] = 0;
+      const rare = rareSpawnChance() > 0 && Math.random() < rareSpawnChance();
+      const tier = rare ? 1 : 0;
+      state.grid[idx] = tier;
       state.gatheredCount += 1;
       save();
-      showToast(countTier(0) >= 2 ? 'Теперь соедини два Spark.' : 'Новая Spark появилась на столе.', 'info');
+      showToast(rare ? `Редкая удача! Сразу создана ${ITEMS[tier].name}.` : (countTier(0) >= 2 ? 'Теперь объедини две искры.' : 'Новая искра появилась на столе.'), rare ? 'magic' : 'info');
       render();
     }
     function interact(index) {
@@ -225,22 +295,37 @@
       state.mergesCompleted += 1;
       selectedIndex = null;
       flashCellIndex = index;
-      maybeRepairOrder();
+      if (state.currentOrder.tier > state.highestDiscoveredTier) state.currentOrder = createOrder(state.highestDiscoveredTier, state.catalystLevel);
+      ensureSpecialContract();
       save();
-      showToast(discovered ? `Новое открытие: ${ITEMS[nextTier].name}` : `Merge → ${ITEMS[nextTier].name}`, discovered ? 'magic' : 'success');
+      showToast(discovered ? `Новое открытие: ${ITEMS[nextTier].name}` : `Слияние → ${ITEMS[nextTier].name}`, discovered ? 'magic' : 'success');
       render();
       setTimeout(() => { flashCellIndex = null; render(); }, 520);
     }
     function fulfill() {
       const idx = state.grid.findIndex((v, i) => i < state.unlockedCells && v === state.currentOrder.tier);
       if (idx === -1) return;
-      state.grid[idx] = null;
-      state.essence += state.currentOrder.reward;
-      state.ordersCompleted += 1;
       const reward = state.currentOrder.reward;
+      state.grid[idx] = null;
+      state.essence += reward;
+      state.ordersCompleted += 1;
       state.currentOrder = createOrder(Math.max(state.highestDiscoveredTier, 1), state.catalystLevel);
+      ensureSpecialContract();
       save();
-      showToast(`Заказ выполнен: +${reward} essence`, 'success');
+      showToast(`Заказ выполнен: +${reward} эссенции`, 'success');
+      render();
+    }
+    function fulfillSpecial() {
+      if (!state.specialContract) return;
+      const idx = state.grid.findIndex((v, i) => i < state.unlockedCells && v === state.specialContract.tier);
+      if (idx === -1) return;
+      const reward = state.specialContract.reward;
+      state.grid[idx] = null;
+      state.essence += reward;
+      state.specialOrdersCompleted += 1;
+      state.specialContract = createOrder(Math.max(state.highestDiscoveredTier, 2), state.catalystLevel, 'special');
+      save();
+      showToast(`Особый контракт закрыт: +${reward} эссенции`, 'magic');
       render();
     }
     function unlockCell() {
@@ -258,6 +343,7 @@
       state.essence -= cost;
       state.catalystLevel += 1;
       state.currentOrder = createOrder(Math.max(state.highestDiscoveredTier, 1), state.catalystLevel);
+      if (state.specialContract) state.specialContract = createOrder(Math.max(state.highestDiscoveredTier, 2), state.catalystLevel, 'special');
       save();
       showToast(`Катализатор усилен до уровня ${state.catalystLevel}.`, 'magic');
       render();
@@ -265,71 +351,69 @@
 
     document.getElementById('gatherBtn').addEventListener('click', gather);
     document.getElementById('fulfillBtn').addEventListener('click', fulfill);
+    document.getElementById('specialBtn').addEventListener('click', fulfillSpecial);
     document.getElementById('unlockBtn').addEventListener('click', unlockCell);
     document.getElementById('catalystBtn').addEventListener('click', upgradeCatalyst);
 
-    function renderToast() {
-      const wrap = document.getElementById('toastWrap');
-      wrap.innerHTML = toastState ? `<div class="toast ${toastState.tone}">${toastState.text}</div>` : '';
-    }
-
     function renderObjective() {
-      const objective = document.getElementById('objectiveCard');
       const sparkCount = countTier(0);
       const progress = orderProgress();
-      let title = 'Твоя цель';
-      let body = 'Собирай ингредиенты, объединяй одинаковые и закрывай заказы.';
+      const sp = specialProgress();
+      let title = 'Что делать сейчас';
+      let body = 'Собирай ингредиенты, объединяй одинаковые элементы и превращай открытия в награду через заказы.';
       let bullets = [];
-      let focus = { gather: false, fulfill: false, unlock: false, catalyst: false };
+      let focus = { gather:false, fulfill:false, special:false, unlock:false, catalyst:false };
 
       if (state.ordersCompleted === 0 && state.mergesCompleted === 0 && sparkCount < 2) {
-        title = 'Шаг 1 — создай второй Spark';
-        body = 'На столе уже лежит 1 Spark. Нажми «Создать Spark» ещё один раз, чтобы получить пару для первого merge.';
-        bullets = ['Главное действие должно быть очевидным с первого экрана.', 'Сейчас тебе нужен только второй Spark.'];
+        title = 'Шаг 1 — создай вторую искру';
+        body = 'На столе уже лежит 1 искра. Нажми главную кнопку ещё раз, чтобы получить пару для первого слияния.';
+        bullets = ['Первые секунды должны вести к одному очевидному действию.', 'Сейчас тебе нужен только второй базовый элемент.'];
         focus.gather = true;
       } else if (state.ordersCompleted === 0 && state.mergesCompleted === 0) {
-        title = 'Шаг 2 — сделай первый merge';
-        body = selectedIndex === null
-          ? 'Тапни по одному Spark, потом по второму Spark. Два одинаковых элемента превращаются в Glow Herb.'
-          : 'Один Spark уже выбран. Теперь тапни по другому Spark, чтобы получить Glow Herb.';
-        bullets = ['Правило игры: 2 одинаковых элемента = 1 новый tier.', 'Игрок играет ради открытия нового объекта.'];
+        title = 'Шаг 2 — сделай первое слияние';
+        body = selectedIndex === null ? 'Тапни по одной искре, потом по второй. Две одинаковые искры превращаются в Свет-траву.' : 'Одна искра уже выбрана. Тапни по второй такой же — получишь Свет-траву.';
+        bullets = ['Игрок играет ради открытия нового объекта, а не ради самого merge.', 'Один шаг = одно действие.'];
       } else if (state.ordersCompleted === 0 && progress.completed) {
         title = 'Шаг 3 — сдай первый заказ';
-        body = 'Glow Herb уже готов. Нажми «Сдать заказ» и получи первую essence.';
-        bullets = ['Заказ превращает открытие в валюту.', 'После награды появится выбор между новой клеткой и усилением катализатора.'];
+        body = 'Свет-трава уже лежит на столе. Нажми «Сдать заказ» и получи первую эссенцию.';
+        bullets = ['Первая награда должна прийти быстро.', 'После неё появится первый мета-выбор.'];
         focus.fulfill = true;
-      } else if (state.ordersCompleted === 0) {
-        title = 'Собери Glow Herb для заказа';
-        body = 'Повтори цикл: создай Spark → создай Spark → объедини одинаковые элементы.';
-        bullets = ['Формулы показаны справа от цели.', 'Когда нужный tier будет на столе, кнопка заказа станет активной.'];
-        focus.gather = true;
+      } else if (canClaimDaily()) {
+        const daily = currentDailyReward();
+        title = 'Забери бонус дня';
+        body = `Сегодня доступен бонус: +${daily.reward} эссенции.`;
+        bullets = ['Retention-слой не должен мешать core loop.', 'Бонус встроен прямо в основной экран.'];
+      } else if (sp.active && sp.completed) {
+        title = 'Особый контракт готов';
+        body = 'На столе уже есть нужный редкий ингредиент. Сдай его за крупную награду.';
+        bullets = ['Это макро-награда поверх обычного цикла.', 'Редкие моменты должны ощущаться сильнее.'];
+        focus.special = true;
+      } else if (missionViews().some(m => m.completed && !m.claimed)) {
+        title = 'Забери награду за поручение';
+        body = 'Одно из поручений уже выполнено. Получи бонусную эссенцию и ускорь следующий цикл.';
+        bullets = ['Микро-цели удерживают темп.', 'Поручения не блокируют игру.'];
       } else if (unlockCost() !== null && state.essence >= unlockCost()) {
-        title = 'Первая мета-награда';
-        body = 'Открой новую клетку. Больше места на столе = длиннее цепочки merge и меньше тупиков.';
-        bullets = ['Расширение пространства — главный early meta-loop.', 'Новый контент должен приходить быстро.'];
+        title = 'Открой новую клетку';
+        body = 'Больше места на столе = меньше тупиков и длиннее цепочки слияний.';
+        bullets = ['Расширение пространства — главный ранний мета-апгрейд.', 'Игрок замечает его сразу.'];
         focus.unlock = true;
       } else if (state.essence >= catalystCost()) {
         title = 'Усиль катализатор';
-        body = 'Катализатор повышает награду за будущие заказы. Это твой первый экономический усилитель.';
-        bullets = [`Текущий множитель наград: x${catalystMultiplier().toFixed(2)}.`, 'Катализатор усиливает value order loop.'];
+        body = `Катализатор повышает награды и даёт шанс редкого появления. Сейчас шанс редкой генерации: ${(rareSpawnChance() * 100).toFixed(0)}%.`;
+        bullets = [`Следующий множитель наград: x${(catalystMultiplier() + .25).toFixed(2)}.`, 'Это добавляет variable reward без перегруза.'];
         focus.catalyst = true;
       } else {
         const item = ITEMS[state.currentOrder.tier];
         title = `Следующая цель — ${item.name}`;
-        body = `Текущий заказ просит ${item.name}. Собери нужный tier и сдай его ради essence.`;
-        bullets = ['Смотри на быстрые рецепты.', 'Новые открытия сразу попадают в журнал.'];
+        body = `Собери нужный tier для текущего заказа, а затем открой ещё одну формулу.`;
+        bullets = ['Смотри на быстрые рецепты справа.', `Уровень лаборатории сейчас: ${labLevel()}.`];
         focus.gather = true;
       }
 
-      objective.innerHTML = `
-        <div class="objective-eyebrow">Что делать сейчас</div>
-        <h3>${title}</h3>
-        <p>${body}</p>
-        <ul>${bullets.map((item) => `<li>${item}</li>`).join('')}</ul>
-      `;
-
+      document.getElementById('objectiveCard').innerHTML = `<div class="objective-eyebrow">Сейчас важно</div><h3>${title}</h3><p>${body}</p><ul>${bullets.map(v => `<li>${v}</li>`).join('')}</ul>`;
       document.getElementById('gatherBtn').classList.toggle('focus', focus.gather);
       document.getElementById('fulfillBtn').classList.toggle('focus', focus.fulfill);
+      document.getElementById('specialBtn').classList.toggle('focus', focus.special);
       document.getElementById('unlockBtn').classList.toggle('focus', focus.unlock);
       document.getElementById('catalystBtn').classList.toggle('focus', focus.catalyst);
     }
@@ -341,24 +425,49 @@
       }).join('');
     }
 
+    function renderDaily() {
+      const { day, reward } = currentDailyReward();
+      const available = canClaimDaily();
+      document.getElementById('dailyCard').innerHTML = `
+        <div class="recipes-header">Бонус дня</div>
+        <div class="daily-title">День ${day}</div>
+        <div class="muted">Серия входов: ${state.dailyStreak} · награда: +${reward} эссенции</div>
+        <div style="margin-top:12px;"><button id="dailyClaimBtn" class="${available ? 'gold' : 'secondary'}" ${available ? '' : 'disabled'}>${available ? 'Забрать бонус' : 'Уже получено'}</button></div>
+      `;
+      document.getElementById('dailyClaimBtn')?.addEventListener('click', claimDaily);
+    }
+
     function renderOrder() {
       const order = ITEMS[state.currentOrder.tier];
-      const previous = ITEMS[Math.max(0, state.currentOrder.tier - 1)];
+      const prev = ITEMS[Math.max(0, state.currentOrder.tier - 1)];
       const progress = orderProgress();
       document.getElementById('orderCard').innerHTML = `
         <div class="order-main">
-          <div class="order-item">
-            <span class="order-emoji">${order.emoji}</span>
-            <div>
-              <strong>${order.name}</strong>
-              <div class="muted">Tier ${order.tier}</div>
-            </div>
-          </div>
-          <div class="order-reward">+${state.currentOrder.reward} essence</div>
+          <div class="order-item"><div class="order-emoji">${order.emoji}</div><div><strong>${order.name}</strong><div class="muted">Обычный заказ · tier ${order.tier}</div></div></div>
+          <div class="order-reward">+${state.currentOrder.reward} эссенции</div>
         </div>
-        <div class="order-progress ${progress.completed ? 'ready' : ''}">На столе: ${progress.have}/${progress.need}</div>
-        <div class="formula-line">Формула: 2 ${previous.name} → ${order.name}</div>
-        <div class="muted">Катализатор: ур. ${state.catalystLevel} · множитель наград x${catalystMultiplier().toFixed(2)}</div>
+        <div class="order-progress ${progress.completed ? 'ready' : ''}">На столе: ${progress.have}/1</div>
+        <div class="formula-line">Формула: 2 ${prev.name} → ${order.name}</div>
+        <div class="muted">Катализатор: ур. ${state.catalystLevel} · множитель x${catalystMultiplier().toFixed(2)}</div>
+      `;
+    }
+
+    function renderSpecial() {
+      if (!state.specialContract) {
+        document.getElementById('specialCard').innerHTML = '<div class="muted">Особые контракты откроются после 2 обычных заказов и 3+ открытий.</div>';
+        return;
+      }
+      const order = ITEMS[state.specialContract.tier];
+      const prev = ITEMS[Math.max(0, state.specialContract.tier - 1)];
+      const progress = specialProgress();
+      document.getElementById('specialCard').innerHTML = `
+        <div class="order-main">
+          <div class="order-item"><div class="order-emoji">${order.emoji}</div><div><strong>${order.name}</strong><div class="muted">Особый контракт · tier ${order.tier}</div></div></div>
+          <div class="order-reward special">+${state.specialContract.reward} эссенции</div>
+        </div>
+        <div class="order-progress ${progress.completed ? 'ready' : ''}">На столе: ${progress.have}/1</div>
+        <div class="formula-line">Формула: 2 ${prev.name} → ${order.name}</div>
+        <div class="muted">Особые контракты дают сильный reward spike.</div>
       `;
     }
 
@@ -371,10 +480,10 @@
       }
       const status = document.getElementById('boardStatus');
       if (entries.size === 0) {
-        status.innerHTML = '<span class="summary-chip muted">Стол пуст — создай Spark.</span>';
+        status.innerHTML = '<span class="summary-chip muted">Стол пуст — создай искру.</span>';
         return;
       }
-      status.innerHTML = Array.from(entries.entries()).sort((a,b) => a[0]-b[0]).map(([tier, count]) => `<span class="summary-chip">${ITEMS[tier].emoji} ${ITEMS[tier].name} ×${count}</span>`).join('');
+      status.innerHTML = Array.from(entries.entries()).sort((a,b)=>a[0]-b[0]).map(([tier,count]) => `<span class="summary-chip">${ITEMS[tier].emoji} ${ITEMS[tier].name} ×${count}</span>`).join('');
     }
 
     function renderBoard() {
@@ -382,20 +491,18 @@
       const board = document.getElementById('board');
       board.innerHTML = '';
       const selectedTier = selectedIndex !== null ? state.grid[selectedIndex] : null;
-
       for (let i = 0; i < state.grid.length; i++) {
         const unlocked = i < state.unlockedCells;
         const value = state.grid[i];
         const btn = document.createElement('button');
         btn.className = 'cell';
-
         if (!unlocked) {
           btn.classList.add('locked');
-          btn.innerHTML = '<div style="font-size:28px">🔒</div><div style="font-size:13px;font-weight:700">Locked</div>';
+          btn.innerHTML = '<div style="font-size:28px">🔒</div><div style="font-size:13px;font-weight:700">Закрыто</div>';
           btn.disabled = true;
         } else if (value === null) {
           btn.classList.add('empty');
-          btn.innerHTML = '<div style="font-size:28px">+</div><div style="font-size:13px;font-weight:700">Empty slot</div>';
+          btn.innerHTML = '<div style="font-size:28px">+</div><div style="font-size:13px;font-weight:700">Пустая клетка</div>';
         } else {
           const item = ITEMS[value];
           btn.innerHTML = `<div style="font-size:28px">${item.emoji}</div><div style="font-size:13px;font-weight:700">${item.name}</div>`;
@@ -408,10 +515,7 @@
         btn.addEventListener('click', () => interact(i));
         board.appendChild(btn);
       }
-
-      document.getElementById('boardHint').textContent = selectedIndex === null
-        ? 'Тапни по двум одинаковым элементам, чтобы объединить их.'
-        : 'Элемент выбран. Тапни по такому же для merge.';
+      document.getElementById('boardHint').textContent = selectedIndex === null ? 'Тапни по двум одинаковым элементам, чтобы объединить их.' : 'Элемент выбран. Тапни по такому же для merge.';
     }
 
     function renderJournal() {
@@ -421,16 +525,34 @@
         const found = state.discoveries.includes(item.tier);
         const el = document.createElement('div');
         el.className = 'entry' + (found ? '' : ' hidden');
-        el.innerHTML = found
-          ? `<div style="font-size:22px">${item.emoji}</div><div><div class="journal-name">${item.name}</div><div class="muted">${item.description}</div></div>`
-          : '<div style="font-size:22px">❔</div><div>Unknown Formula</div>';
+        el.innerHTML = found ? `<div style="font-size:22px">${item.emoji}</div><div><div class="journal-name">${item.name}</div><div class="muted">${item.description}</div></div>` : '<div style="font-size:22px">❔</div><div>Неизвестная формула</div>';
         journal.appendChild(el);
+      });
+    }
+
+    function renderMissions() {
+      const wrap = document.getElementById('missions');
+      wrap.innerHTML = '';
+      missionViews().forEach(mission => {
+        const el = document.createElement('div');
+        el.className = 'mission-card' + (mission.completed ? ' mission-done' : '');
+        el.innerHTML = `
+          <div class="mission-top">
+            <div><div class="mission-title">${mission.title}</div><div class="muted">${mission.description}</div></div>
+            <div class="mission-reward">+${mission.reward}</div>
+          </div>
+          <div class="mission-progress">${mission.progress}/${mission.target}</div>
+          <button class="mission-claim ${mission.completed && !mission.claimed ? 'gold' : 'secondary'}" ${mission.completed && !mission.claimed ? '' : 'disabled'}>${mission.claimed ? 'Получено' : mission.completed ? 'Забрать' : 'Не готово'}</button>
+        `;
+        el.querySelector('.mission-claim')?.addEventListener('click', () => claimMission(mission.id));
+        wrap.appendChild(el);
       });
     }
 
     function renderButtons() {
       document.getElementById('gatherBtn').disabled = firstEmpty() === -1;
-      document.getElementById('fulfillBtn').disabled = !canFulfill();
+      document.getElementById('fulfillBtn').disabled = !orderProgress().completed;
+      document.getElementById('specialBtn').disabled = !(specialProgress().active && specialProgress().completed);
       const uCost = unlockCost();
       const unlockBtn = document.getElementById('unlockBtn');
       unlockBtn.disabled = uCost === null || state.essence < uCost;
@@ -441,15 +563,23 @@
       catalystBtn.textContent = `Усилить катализатор (${cCost})`;
     }
 
-    function render() {
+    function renderHUD() {
       document.getElementById('essence').textContent = Math.floor(state.essence);
-      document.getElementById('discoveriesCount').textContent = state.discoveries.length;
-      document.getElementById('ordersCompleted').textContent = state.ordersCompleted;
+      document.getElementById('discoveriesCount').textContent = Math.max(0, state.discoveries.length - 1);
+      document.getElementById('ordersCompleted').textContent = state.ordersCompleted + state.specialOrdersCompleted;
+      document.getElementById('labLevel').textContent = labLevel();
+    }
+
+    function render() {
+      renderHUD();
       renderObjective();
       renderRecipes();
+      renderDaily();
       renderOrder();
+      renderSpecial();
       renderBoard();
       renderJournal();
+      renderMissions();
       renderButtons();
       renderToast();
     }

@@ -1,18 +1,21 @@
 # Alchemy Lab
 
 **Жанр:** merge + discovery + orders  
-**Версия:** 0.2.0  
+**Версия:** 1.0.0  
 **Статус:** active thematic pilot
 
 ## Что это
 
-`Alchemy Lab` — новый продуктовый пилот Studio OS. Игрок собирает базовые ингредиенты, объединяет одинаковые элементы в более редкие алхимические материалы и закрывает заказы мастерской.
+`Alchemy Lab` — главный тематический пилот Studio OS. Внутри игры все названия и UI переведены на русский: игрок видит **Алхимическую мастерскую**, собирает искры, открывает формулы, выполняет заказы и закрывает особые контракты.
 
-Это уже не технический smoke-test как `SeedClickerMini`, а попытка проверить более сильную fantasy:
-- discovery;
-- коллекцию;
-- progression через рецепты;
-- orders как retention-hook.
+Это уже не технический smoke-test, а полноценный **vertical slice до версии 1.0** с:
+- понятным first-time UX;
+- merge-loop;
+- обычными и особыми заказами;
+- журналом открытий;
+- поручениями алхимика;
+- бонусом дня;
+- мета-апгрейдами лаборатории.
 
 ## Запуск
 
@@ -50,9 +53,13 @@ npm run dev
 - [x] Core loop
 - [x] Grid UI
 - [x] Orders
+- [x] Special contracts
 - [x] Discoveries
+- [x] Missions
+- [x] Daily reward
 - [x] Save
 - [x] Core onboarding clarity
+- [x] Russian naming in UI
 - [ ] Audio
 - [ ] Ads
-- [ ] Further polish
+- [ ] Further content depth
