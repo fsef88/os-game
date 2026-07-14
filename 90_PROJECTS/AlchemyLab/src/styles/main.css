@@ -18,7 +18,7 @@ body {
 }
 
 #app {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 88px 16px 32px;
 }
@@ -26,7 +26,7 @@ body {
 .hud {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 60;
   margin-bottom: 16px;
 }
 
@@ -61,6 +61,39 @@ body {
   gap: 16px;
 }
 
+.toast-layer {
+  position: sticky;
+  top: 74px;
+  z-index: 70;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  box-shadow: 0 16px 28px rgba(0,0,0,0.28);
+  animation: toastIn 0.18s ease-out;
+}
+
+.toast-info {
+  background: rgba(127, 213, 255, 0.18);
+  border: 1px solid rgba(127, 213, 255, 0.45);
+}
+
+.toast-success {
+  background: rgba(141, 229, 125, 0.16);
+  border: 1px solid rgba(141, 229, 125, 0.42);
+}
+
+.toast-magic {
+  background: rgba(216, 168, 255, 0.16);
+  border: 1px solid rgba(216, 168, 255, 0.42);
+}
+
 .panel {
   background: rgba(32, 37, 77, 0.92);
   border: 1px solid rgba(255,255,255,0.08);
@@ -71,7 +104,7 @@ body {
 
 .hero-panel {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .eyebrow {
@@ -89,9 +122,86 @@ body {
 }
 
 .subtitle {
-  opacity: 0.85;
-  max-width: 680px;
+  opacity: 0.88;
+  max-width: 720px;
   line-height: 1.5;
+}
+
+.objective-layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 14px;
+}
+
+.objective-card,
+.recipes-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.objective-eyebrow,
+.recipes-header {
+  display: inline-block;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f5c76c;
+  margin-bottom: 10px;
+}
+
+.objective-card h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.objective-card p {
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.objective-card ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+}
+
+.objective-card li {
+  opacity: 0.82;
+  line-height: 1.4;
+}
+
+.recipe-rail {
+  display: grid;
+  gap: 10px;
+}
+
+.recipe-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+}
+
+.recipe-chip.seen {
+  box-shadow: inset 0 0 0 1px rgba(245, 199, 108, 0.12);
+}
+
+.recipe-part {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recipe-part.target {
+  color: #f5c76c;
+}
+
+.recipe-arrow {
+  opacity: 0.65;
+  font-size: 13px;
 }
 
 .button-row {
@@ -110,7 +220,7 @@ button {
   cursor: pointer;
   color: #1f1600;
   background: linear-gradient(180deg, #f5c76c 0%, #e5a94b 100%);
-  transition: transform 0.1s ease, opacity 0.1s ease;
+  transition: transform 0.1s ease, opacity 0.1s ease, box-shadow 0.12s ease;
 }
 
 button.secondary {
@@ -128,9 +238,14 @@ button:disabled {
   transform: none;
 }
 
+button.tutorial-focus {
+  box-shadow: 0 0 0 3px rgba(245, 199, 108, 0.32), 0 0 24px rgba(245, 199, 108, 0.24);
+  animation: tutorialPulse 1.4s ease-in-out infinite;
+}
+
 .alchemy-grid-layout {
   display: grid;
-  grid-template-columns: 1.15fr 1.35fr 1fr;
+  grid-template-columns: 1.1fr 1.3fr 1fr;
   gap: 16px;
 }
 
@@ -144,6 +259,21 @@ button:disabled {
 
 .hint, .muted {
   opacity: 0.72;
+}
+
+.board-status {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.summary-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .order-card {
@@ -177,6 +307,23 @@ button:disabled {
   color: #f5c76c;
 }
 
+.order-progress {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  font-weight: 700;
+}
+
+.order-progress.ready {
+  background: rgba(141, 229, 125, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(141, 229, 125, 0.24);
+}
+
+.formula-line {
+  color: #f5c76c;
+  font-weight: 700;
+}
+
 .compact-actions {
   display: grid;
   gap: 10px;
@@ -196,6 +343,7 @@ button:disabled {
   color: #ffffff;
   background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.14));
   border: 2px solid transparent;
+  border-radius: 16px;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 
@@ -208,6 +356,11 @@ button:disabled {
   box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.25);
 }
 
+.alchemy-cell.goal-cell,
+.alchemy-cell.merge-match {
+  box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.22), 0 0 18px rgba(245, 199, 108, 0.16);
+}
+
 .alchemy-cell.locked {
   color: rgba(255,255,255,0.35);
   background: rgba(255,255,255,0.04);
@@ -215,20 +368,26 @@ button:disabled {
 
 .alchemy-cell:not(.locked):not(.empty) {
   background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--cell-accent, #7fd5ff) 42%, transparent), transparent 55%),
+    radial-gradient(circle at top, var(--cell-accent, rgba(127, 213, 255, 0.3)) 0%, transparent 58%),
     linear-gradient(180deg, rgba(255,255,255,0.09), rgba(0,0,0,0.15));
+}
+
+.alchemy-cell.merge-flash {
+  animation: mergeFlash 0.48s ease-out;
 }
 
 .cell-emoji {
   font-size: 28px;
 }
 
-.cell-name {
+.cell-name,
+.cell-lock-text {
   font-size: 13px;
   font-weight: 700;
 }
 
-.cell-empty {
+.cell-empty,
+.cell-lock {
   font-size: 28px;
 }
 
@@ -254,7 +413,29 @@ button:disabled {
   font-size: 22px;
 }
 
+.journal-name {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+@keyframes mergeFlash {
+  0% { transform: scale(0.94); box-shadow: 0 0 0 0 rgba(245, 199, 108, 0.45); }
+  60% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(245, 199, 108, 0); }
+  100% { transform: scale(1); }
+}
+
+@keyframes tutorialPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 980px) {
+  .objective-layout,
   .alchemy-grid-layout {
     grid-template-columns: 1fr;
   }

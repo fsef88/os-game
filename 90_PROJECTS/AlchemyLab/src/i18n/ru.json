@@ -3,12 +3,14 @@
   "hud.discoveries": "Открытия",
   "hud.orders": "Заказы",
   "screen.title": "Alchemy Lab",
-  "screen.subtitle": "Собирай ингредиенты, объединяй элементы и выполняй заказы мастерской.",
-  "button.gather": "Собрать ингредиент",
-  "button.fulfill": "Выполнить заказ",
+  "screen.subtitle": "Понятный merge-пилот: создай Spark, соедини одинаковые элементы и закрой первый заказ мастерской.",
+  "button.gather": "Создать Spark",
+  "button.fulfill": "Сдать заказ",
   "button.unlock": "Открыть клетку",
   "button.catalyst": "Усилить катализатор",
   "label.board": "Алхимический стол",
   "label.order": "Текущий заказ",
-  "label.journal": "Журнал открытий"
+  "label.journal": "Журнал открытий",
+  "label.recipes": "Быстрые рецепты",
+  "label.objective": "Что делать сейчас"
 }

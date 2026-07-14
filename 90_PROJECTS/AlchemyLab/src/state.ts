@@ -64,7 +64,9 @@ class StateManager<T> {
 
 function createGrid(): Array<number | null> {
   const cellCount = CONFIG.gridColumns * CONFIG.gridRows;
-  return Array.from({ length: cellCount }, () => null);
+  const grid: Array<number | null> = Array.from({ length: cellCount }, () => null);
+  grid[0] = 0;
+  return grid;
 }
 
 export function createInitialState(now = Date.now()): GameState {
@@ -96,7 +98,16 @@ export const state = new StateManager<GameState>(createInitialState());
 
 export function hydrateState(partial: Partial<GameState>) {
   const base = createInitialState();
-  state.replace({ ...base, ...partial });
+  const nextGrid = partial.grid && partial.grid.length === base.grid.length
+    ? partial.grid
+    : base.grid;
+
+  state.replace({
+    ...base,
+    ...partial,
+    grid: nextGrid,
+    discoveries: partial.discoveries && partial.discoveries.length > 0 ? partial.discoveries : base.discoveries,
+  });
 }
 
 export function startSession(now = Date.now()) {

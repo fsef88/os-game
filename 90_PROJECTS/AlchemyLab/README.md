@@ -1,7 +1,7 @@
 # Alchemy Lab
 
 **Жанр:** merge + discovery + orders  
-**Версия:** 0.1.0  
+**Версия:** 0.2.0  
 **Статус:** active thematic pilot
 
 ## Что это
@@ -52,6 +52,7 @@ npm run dev
 - [x] Orders
 - [x] Discoveries
 - [x] Save
+- [x] Core onboarding clarity
 - [ ] Audio
 - [ ] Ads
-- [ ] Polish
+- [ ] Further polish
