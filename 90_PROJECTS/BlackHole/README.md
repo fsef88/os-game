@@ -1,7 +1,7 @@
 # Black Hole
 
 **Жанр:** arcade growth / black hole toy  
-**Версия:** 0.4.0  
+**Версия:** 0.5.0  
 **Статус:** active toy-first pilot
 
 ## Что это
@@ -43,6 +43,7 @@ npm run dev
 - смена района;
 - более читаемый traffic feel;
 - marker финальной цели;
+- run timer и rank экрана результата;
 - локальный save текущего раннего прогресса.
 
 ## Документация

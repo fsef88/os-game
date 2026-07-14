@@ -28,6 +28,7 @@ let pulseSceneUntil = 0;
 let hitSceneUntil = 0;
 let districtBannerText = '';
 let districtBannerUntil = 0;
+let runStartedAt = Date.now();
 
 export function initBlackHoleGame(container: HTMLElement) {
   if (mounted) return;
@@ -53,6 +54,7 @@ export function initBlackHoleGame(container: HTMLElement) {
       <div class="hud-pill">🔥 Комбо <strong id="hud-combo">0</strong></div>
       <div class="hud-pill">🗺 Район <strong id="hud-district">Двор</strong></div>
       <div class="hud-pill">❤ Жизни <strong id="hud-lives">3</strong></div>
+      <div class="hud-pill">⏱ Время <strong id="hud-time">0:00</strong></div>
     </div>
 
     <div class="scene-card" id="scene-card">
@@ -87,6 +89,7 @@ export function initBlackHoleGame(container: HTMLElement) {
           <div class="boost-label">Перегрузка</div>
           <div class="boost-bar"><div id="boost-bar-fill" class="boost-bar-fill"></div></div>
         </div>
+        <div id="combo-rush" class="tip-chip hidden">COMBO RUSH</div>
         <div class="tip-chip">WASD / мышь / тач</div>
       </div>
     </div>
@@ -118,6 +121,7 @@ export function initBlackHoleGame(container: HTMLElement) {
   screen.querySelector<HTMLButtonElement>('#restart-button')?.addEventListener('click', () => {
     restartRunPreservingMeta();
     resetBoost();
+    runStartedAt = Date.now();
     showToast('Новый ран начался.', 'info');
   });
   screen.querySelector<HTMLButtonElement>('#boost-button')?.addEventListener('click', () => {
@@ -263,28 +267,37 @@ function renderScene() {
   const progress = getProgressToNextLevel(current);
   const now = Date.now();
   const boostActive = now < boostActiveUntil;
+  const elapsedSec = Math.max(0, Math.floor((now - runStartedAt) / 1000));
 
   setText('hud-mass', String(Math.floor(current.mass)));
   setText('hud-score', String(Math.floor(current.score)));
   setText('hud-combo', String(current.combo));
   setText('hud-district', district.name);
   setText('hud-lives', String(current.lives));
+  setText('hud-time', formatTime(elapsedSec));
   setText('best-mass', String(Math.floor(current.bestMass)));
   setText('best-combo', String(current.bestCombo));
   setText('best-score', String(Math.floor(current.bestScore)));
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''}`;
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
   }
 
   const districtPanel = document.getElementById('district-panel');
   if (districtPanel) {
+    const dangerNearby = current.objects.some((object) => {
+      const dx = current.holeX - object.x;
+      const dy = current.holeY - object.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return OBJECT_TYPES[object.typeId].tier > current.sizeLevel && distance < 140;
+    });
     districtPanel.innerHTML = `
       <div class="panel-label">Район</div>
       <div class="panel-title">${district.name}</div>
       <div class="panel-text">${district.goal}</div>
       <div class="panel-subtext">Сильный ход: сначала собирай безопасные объекты, потом переходи на более крупные цели.</div>
+      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : 'Район под контролем'}</div>
     `;
   }
 
@@ -307,6 +320,7 @@ function renderScene() {
 
   const boostFill = document.getElementById('boost-bar-fill');
   const boostButton = document.getElementById('boost-button') as HTMLButtonElement | null;
+  const comboRush = document.getElementById('combo-rush');
   if (boostFill) {
     const ratio = now < boostCooldownUntil
       ? 1 - Math.max(0, (boostCooldownUntil - now) / BOOST_COOLDOWN_MS)
@@ -321,6 +335,9 @@ function renderScene() {
       : cooling
         ? `Перезарядка ${Math.ceil((boostCooldownUntil - now) / 1000)}с`
         : 'Сингулярный рывок';
+  }
+  if (comboRush) {
+    comboRush.classList.toggle('hidden', current.combo < 4);
   }
 
   const arena = document.getElementById('arena');
@@ -376,6 +393,7 @@ function renderScene() {
       bossTarget.style.left = `${busObject.x - 48}px`;
       bossTarget.style.top = `${Math.max(12, busObject.y - 74)}px`;
       bossTarget.textContent = current.sizeLevel >= 5 ? 'Цель: автобус' : 'Пока слишком большой';
+      bossTarget.classList.toggle('ready', current.sizeLevel >= 5);
     }
   }
 
@@ -416,8 +434,9 @@ function renderOverlay() {
       <p>${current.victory ? 'Ты вырос до размеров автобуса и подчинил себе весь район.' : 'Ты столкнулся с объектами, которые были слишком велики для текущего размера.'}</p>
       <div class="overlay-stats">
         <span>Масса: <strong>${Math.floor(current.mass)}</strong></span>
+        <span>Счёт: <strong>${Math.floor(current.score)}</strong></span>
         <span>Лучшее комбо: <strong>${current.bestCombo}</strong></span>
-        <span>Поглощено объектов: <strong>${current.absorbedCount}</strong></span>
+        <span>Ранг: <strong>${getRank(current.score, current.victory)}</strong></span>
       </div>
       <button id="overlay-restart" class="hero-button big">Играть ещё</button>
     </div>
@@ -426,6 +445,7 @@ function renderOverlay() {
   root.querySelector<HTMLButtonElement>('#overlay-restart')?.addEventListener('click', () => {
     restartRunPreservingMeta();
     resetBoost();
+    runStartedAt = Date.now();
     showToast('Новый ран начался.', 'info');
   });
 }
@@ -449,4 +469,18 @@ function renderToast() {
 function setText(id: string, value: string) {
   const element = document.getElementById(id);
   if (element) element.textContent = value;
+}
+
+function formatTime(totalSec: number): string {
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+function getRank(score: number, victory: boolean): string {
+  if (victory && score >= 2500) return 'S';
+  if (score >= 1600) return 'A';
+  if (score >= 900) return 'B';
+  if (score >= 400) return 'C';
+  return 'D';
 }

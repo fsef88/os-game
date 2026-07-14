@@ -200,3 +200,8 @@ body { min-height: 100vh; }
   .boost-status { width: 100%; }
   .arena { height: 460px; }
 }
+
+.status-line { margin-top: 10px; padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,.06); font-size: 13px; font-weight: 800; }
+.status-line.danger-line { background: rgba(255,102,117,.12); color: #ff9da8; }
+.scene-card.combo-rush .legend-row { box-shadow: 0 0 0 1px rgba(245,199,108,.10); }
+.boss-target.ready { color: #f6cf74; box-shadow: 0 0 18px rgba(246,207,116,.18); }
