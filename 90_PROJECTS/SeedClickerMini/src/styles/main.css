@@ -1,0 +1,167 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden auto;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #ffffff;
+  background: linear-gradient(180deg, #0d122c 0%, #18224a 100%);
+}
+
+body {
+  min-height: 100vh;
+}
+
+#app {
+  position: relative;
+  min-height: 100vh;
+  padding: 96px 16px 24px;
+}
+
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  padding: env(safe-area-inset-top, 12px) 12px 12px;
+  z-index: 100;
+}
+
+.hud-top {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 30, 40, 0.65);
+  padding: 10px 16px;
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hud-money {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.hud-label {
+  opacity: 0.7;
+  margin-right: 8px;
+}
+
+.clicker-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.clicker-card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.clicker-hero {
+  text-align: center;
+}
+
+.clicker-hero h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.clicker-hero p {
+  opacity: 0.8;
+  margin-bottom: 18px;
+}
+
+.seed-button {
+  width: 100%;
+  max-width: 360px;
+  min-height: 96px;
+  border-radius: 24px;
+  font-size: 24px;
+  margin: 0 auto 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f2c66d 0%, #d99d33 100%);
+  color: #2c1a00;
+}
+
+.clicker-stats {
+  display: grid;
+  gap: 8px;
+}
+
+.clicker-upgrades {
+  display: grid;
+  gap: 12px;
+}
+
+.hint {
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+.upgrade-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+button {
+  cursor: pointer;
+  background: rgba(105, 210, 111, 0.95);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  min-width: 88px;
+  min-height: 44px;
+  touch-action: manipulation;
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  background: rgba(100,100,100,0.5);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+  #app {
+    padding-top: 88px;
+  }
+
+  .upgrade-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .seed-button {
+    min-height: 88px;
+    font-size: 22px;
+  }
+}

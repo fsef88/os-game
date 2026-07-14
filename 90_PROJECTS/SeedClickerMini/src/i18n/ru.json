@@ -1,0 +1,14 @@
+{
+  "hud.money": "Монеты",
+  "screen.title": "Seed Clicker Mini",
+  "screen.subtitle": "Тапай по семечку, усиливай тап и запускай авто-рост.",
+  "seed.button": "🌱 Тапнуть по семечку",
+  "seed.power": "Сила тапа",
+  "seed.total_taps": "Всего тапов",
+  "upgrade.tap": "Усилить тап",
+  "upgrade.auto": "Купить авто-рост",
+  "upgrade.level": "Уровень",
+  "upgrade.cost": "Стоимость",
+  "upgrade.income": "Доход в секунду",
+  "hint.start": "Сначала нажми на семечко несколько раз, потом купи первое улучшение."
+}

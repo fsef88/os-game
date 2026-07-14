@@ -1,0 +1,14 @@
+{
+  "hud.money": "Coins",
+  "screen.title": "Seed Clicker Mini",
+  "screen.subtitle": "Tap the seed, upgrade your tap, and grow passive income.",
+  "seed.button": "🌱 Tap the seed",
+  "seed.power": "Tap power",
+  "seed.total_taps": "Total taps",
+  "upgrade.tap": "Upgrade tap",
+  "upgrade.auto": "Buy auto growth",
+  "upgrade.level": "Level",
+  "upgrade.cost": "Cost",
+  "upgrade.income": "Income per second",
+  "hint.start": "Tap a few times first, then buy your first upgrade."
+}

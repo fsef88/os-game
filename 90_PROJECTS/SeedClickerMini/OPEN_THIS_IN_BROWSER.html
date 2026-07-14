@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Seed Clicker Mini</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(180deg, #0d122c 0%, #18224a 100%);
+      color: #fff;
+    }
+    body { padding: 16px; }
+    .wrap { max-width: 760px; margin: 0 auto; padding-top: 16px; }
+    .hud {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(20, 24, 48, 0.88);
+      border: 1px solid rgba(255,255,255,.1);
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .money { font-size: 22px; font-weight: 800; }
+    .muted { opacity: .75; }
+    .grid { display: grid; gap: 16px; }
+    .card {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: 0 12px 32px rgba(0,0,0,.22);
+    }
+    h1 { font-size: 30px; margin-bottom: 8px; }
+    .hero p { opacity: .85; margin-bottom: 18px; }
+    .seed {
+      width: 100%; min-height: 108px; border: 0; border-radius: 26px;
+      font-size: 26px; font-weight: 900; cursor: pointer;
+      background: linear-gradient(180deg, #f5cd77 0%, #dc9f2f 100%);
+      color: #2d1b00; box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+      transition: transform .08s ease;
+    }
+    .seed:active { transform: scale(.98); }
+    .stats { display: grid; gap: 8px; margin-top: 16px; }
+    .upgrades { display: grid; gap: 12px; }
+    .upgrade {
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+      background: rgba(0,0,0,.14); border-radius: 16px; padding: 14px;
+    }
+    .upgrade h3 { margin-bottom: 6px; }
+    .buy {
+      min-width: 98px; min-height: 48px; border-radius: 12px; border: 0; cursor: pointer;
+      background: rgba(105, 210, 111, .96); color: #fff; font-size: 18px; font-weight: 800;
+    }
+    .buy:disabled { background: rgba(115,115,115,.55); cursor: not-allowed; }
+    .tips { display: grid; gap: 10px; }
+    .pill {
+      display: inline-block; padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.1); font-size: 13px;
+    }
+    .footer { opacity: .7; font-size: 14px; }
+    @media (max-width: 640px) {
+      h1 { font-size: 26px; }
+      .upgrade { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="money">💰 <span id="money">0</span></div>
+      <div class="muted">🌱 Seed Clicker Mini · standalone playable build</div>
+    </div>
+
+    <div class="grid">
+      <section class="card hero">
+        <h1>Seed Clicker Mini</h1>
+        <p>Тапай по семечку, усиливай тап, покупай авто‑рост и смотри, как доход ускоряется.</p>
+        <button class="seed" id="seedBtn">🌱 Тапнуть по семечку</button>
+        <div class="stats">
+          <div><strong>Сила тапа:</strong> <span id="tapPower">1</span></div>
+          <div><strong>Всего тапов:</strong> <span id="totalTaps">0</span></div>
+          <div><strong>Доход / сек:</strong> <span id="incomePerSec">0</span></div>
+        </div>
+      </section>
+
+      <section class="card upgrades">
+        <div class="pill">Это уже можно просто открыть двойным кликом, без npm и без dev-server.</div>
+
+        <div class="upgrade">
+          <div>
+            <h3>Усилить тап</h3>
+            <div>Уровень: <span id="tapLevel">0</span></div>
+            <div>Стоимость: <span id="tapCost">25</span></div>
+            <div class="muted">Каждый уровень добавляет +1 к силе тапа.</div>
+          </div>
+          <button class="buy" id="buyTap">Купить</button>
+        </div>
+
+        <div class="upgrade">
+          <div>
+            <h3>Купить авто‑рост</h3>
+            <div>Уровень: <span id="autoLevel">0</span></div>
+            <div>Стоимость: <span id="autoCost">60</span></div>
+            <div class="muted">Каждый уровень даёт +1 монету в секунду.</div>
+          </div>
+          <button class="buy" id="buyAuto">Купить</button>
+        </div>
+      </section>
+
+      <section class="card tips">
+        <h3>Что здесь проверяется</h3>
+        <div>• виден ли нормальный экран, а не пустой фон</div>
+        <div>• работает ли core loop</div>
+        <div>• сохраняется ли прогресс в localStorage</div>
+        <div>• понятен ли старт без документации</div>
+      </section>
+
+      <section class="card footer">
+        Если хочешь, следующим шагом я могу сделать уже не микро‑экран, а нормальную мини‑игру <strong>MergeMini</strong> с сеткой, merge‑логикой и более живым UI.
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const KEY = 'seed_clicker_mini_standalone_save_v1';
+    const state = load() || {
+      money: 0,
+      tapPower: 1,
+      tapLevel: 0,
+      autoLevel: 0,
+      totalTaps: 0
+    };
+
+    function tapCost(level) {
+      return Math.round(25 * Math.pow(1.6, level));
+    }
+    function autoCost(level) {
+      return Math.round(60 * Math.pow(1.8, level));
+    }
+    function incomePerSec(level) {
+      return level;
+    }
+    function fmt(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+      return Math.floor(n).toString();
+    }
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+    function render() {
+      document.getElementById('money').textContent = fmt(state.money);
+      document.getElementById('tapPower').textContent = state.tapPower;
+      document.getElementById('totalTaps').textContent = state.totalTaps;
+      document.getElementById('incomePerSec').textContent = incomePerSec(state.autoLevel);
+      document.getElementById('tapLevel').textContent = state.tapLevel;
+      document.getElementById('autoLevel').textContent = state.autoLevel;
+      document.getElementById('tapCost').textContent = tapCost(state.tapLevel);
+      document.getElementById('autoCost').textContent = autoCost(state.autoLevel);
+      document.getElementById('buyTap').disabled = state.money < tapCost(state.tapLevel);
+      document.getElementById('buyAuto').disabled = state.money < autoCost(state.autoLevel);
+    }
+
+    document.getElementById('seedBtn').addEventListener('click', () => {
+      state.money += state.tapPower;
+      state.totalTaps += 1;
+      save();
+      render();
+    });
+
+    document.getElementById('buyTap').addEventListener('click', () => {
+      const cost = tapCost(state.tapLevel);
+      if (state.money < cost) return;
+      state.money -= cost;
+      state.tapLevel += 1;
+      state.tapPower = 1 + state.tapLevel;
+      save();
+      render();
+    });
+
+    document.getElementById('buyAuto').addEventListener('click', () => {
+      const cost = autoCost(state.autoLevel);
+      if (state.money < cost) return;
+      state.money -= cost;
+      state.autoLevel += 1;
+      save();
+      render();
+    });
+
+    setInterval(() => {
+      const income = incomePerSec(state.autoLevel);
+      if (income <= 0) return;
+      state.money += income / 5;
+      save();
+      render();
+    }, 200);
+
+    render();
+  </script>
+</body>
+</html>
