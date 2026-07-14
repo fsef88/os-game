@@ -1,7 +1,7 @@
 # Black Hole
 
 **Жанр:** arcade growth / black hole toy  
-**Версия:** 1.3.0  
+**Версия:** 1.4.0  
 **Статус:** active toy-first pilot
 
 ## Что это

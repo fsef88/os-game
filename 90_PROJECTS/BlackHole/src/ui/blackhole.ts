@@ -355,7 +355,12 @@ function renderScene() {
   const legendTrack = document.getElementById('legend-track');
   if (legendTrack) {
     const edible = Object.values(OBJECT_TYPES).filter((item) => item.tier <= current.sizeLevel);
-    legendTrack.innerHTML = edible.map((item) => `<div class="legend-chip"><span>${item.emoji}</span><span>${item.label}</span></div>`).join('');
+    legendTrack.innerHTML = edible.map((item) => `
+      <div class="legend-chip">
+        <span class="legend-icon">${getObjectSpriteMarkup(item.id as keyof typeof OBJECT_TYPES)}</span>
+        <span>${item.label}</span>
+      </div>
+    `).join('');
   }
 
   const boostFill = document.getElementById('boost-bar-fill');
@@ -468,13 +473,13 @@ function renderScene() {
   current.objects.forEach((object) => {
     const def = OBJECT_TYPES[object.typeId];
     const node = document.createElement('div');
-    node.className = `object-node ${def.tier > current.sizeLevel ? 'danger' : 'safe'} ${def.effect !== 'none' ? 'pickup' : ''} ${def.id === 'bus' ? 'boss' : ''}`;
+    node.className = `object-node type-${def.id} ${def.tier > current.sizeLevel ? 'danger' : 'safe'} ${def.effect !== 'none' ? 'pickup' : ''} ${def.id === 'bus' ? 'boss' : ''}`;
     node.style.width = `${def.radius * 2}px`;
     node.style.height = `${def.radius * 2}px`;
     node.style.left = `${object.x - def.radius}px`;
     node.style.top = `${object.y - def.radius}px`;
     node.style.setProperty('--accent', def.color);
-    node.innerHTML = `<span class="object-emoji">${def.emoji}</span>`;
+    node.innerHTML = getObjectSpriteMarkup(object.typeId);
     arena.appendChild(node);
   });
 
@@ -573,6 +578,37 @@ function showFirstRunOverlay(force = false) {
 function setText(id: string, value: string) {
   const element = document.getElementById(id);
   if (element) element.textContent = value;
+}
+
+function getObjectSpriteMarkup(typeId: keyof typeof OBJECT_TYPES): string {
+  switch (typeId) {
+    case 'coin':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="22" fill="#f7c84b"/><circle cx="32" cy="32" r="16" fill="#ffdf76"/><circle cx="32" cy="32" r="7" fill="#f3b73a"/></svg>`;
+    case 'crate':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="14" width="36" height="36" rx="8" fill="#b88345"/><path d="M14 24h36M14 38h36M32 14v36" stroke="#8a5d2d" stroke-width="4"/></svg>`;
+    case 'star':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 9l6 13 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2z" fill="#ffe66d"/><circle cx="32" cy="32" r="6" fill="#fff6b8"/></svg>`;
+    case 'heart':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 52c-2-2-17-11-17-24 0-7 5-12 11-12 3 0 5 1 6 4 1-3 3-4 6-4 6 0 11 5 11 12 0 13-15 22-17 24z" fill="#ff7187"/></svg>`;
+    case 'shield':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 10l16 6v12c0 11-7 19-16 26-9-7-16-15-16-26V16z" fill="#6fb7ff"/><path d="M32 18v26" stroke="#d8f0ff" stroke-width="4"/><path d="M21 28h22" stroke="#d8f0ff" stroke-width="4"/></svg>`;
+    case 'cone':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="20" width="28" height="24" rx="6" fill="#ffb14a"/><path d="M18 28h28M18 36h28" stroke="#fff4d6" stroke-width="4"/><path d="M22 44h4v10M38 44h4v10" stroke="#666f91" stroke-width="4" stroke-linecap="round"/></svg>`;
+    case 'scooter':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="44" r="7" fill="#7fd6ff"/><circle cx="44" cy="44" r="7" fill="#7fd6ff"/><path d="M18 38h14l7-14h4" stroke="#9ce7ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M39 24v-8" stroke="#9ce7ff" stroke-width="4" stroke-linecap="round"/></svg>`;
+    case 'core':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="18" fill="#627cff" opacity="0.35"/><path d="M32 14c6 8 6 28 0 36-6-8-6-28 0-36zm-18 18c8-6 28-6 36 0-8 6-28 6-36 0z" fill="#8ab0ff"/></svg>`;
+    case 'car':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="18" width="40" height="28" rx="12" fill="#ff7272"/><rect x="21" y="24" width="22" height="10" rx="5" fill="#ffe5e5"/><circle cx="20" cy="48" r="4" fill="#1b2148"/><circle cx="44" cy="48" r="4" fill="#1b2148"/></svg>`;
+    case 'taxi':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="18" width="40" height="28" rx="12" fill="#ffd94e"/><rect x="21" y="24" width="22" height="10" rx="5" fill="#fff3b0"/><rect x="26" y="14" width="12" height="6" rx="2" fill="#1f2136"/></svg>`;
+    case 'bus':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="14" width="44" height="36" rx="12" fill="#4dabf7"/><rect x="16" y="20" width="32" height="10" rx="4" fill="#d6efff"/><rect x="16" y="34" width="14" height="8" rx="3" fill="#d6efff"/><rect x="34" y="34" width="14" height="8" rx="3" fill="#d6efff"/></svg>`;
+    case 'police':
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="18" width="40" height="28" rx="12" fill="#80bfff"/><rect x="21" y="24" width="22" height="10" rx="5" fill="#eff7ff"/><rect x="24" y="14" width="8" height="6" rx="2" fill="#ff7187"/><rect x="32" y="14" width="8" height="6" rx="2" fill="#7fd6ff"/></svg>`;
+    default:
+      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="18" fill="#ffffff" opacity="0.6"/></svg>`;
+  }
 }
 
 function spawnPopup(x: number, y: number, text: string, tone: 'mass' | 'score' | 'warn') {
