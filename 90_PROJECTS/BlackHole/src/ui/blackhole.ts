@@ -1,6 +1,8 @@
 import {
   ARENA_HEIGHT,
   ARENA_WIDTH,
+  BOOST_COOLDOWN_MS,
+  BOOST_DURATION_MS,
   OBJECT_TYPES,
 } from '../config';
 import {
@@ -20,6 +22,8 @@ let pointerActive = false;
 let pointerTarget = { x: ARENA_WIDTH / 2, y: ARENA_HEIGHT / 2 };
 let keyboard = { up: false, down: false, left: false, right: false };
 let lastFrame = performance.now();
+let boostActiveUntil = 0;
+let boostCooldownUntil = 0;
 
 export function initBlackHoleGame(container: HTMLElement) {
   if (mounted) return;
@@ -32,49 +36,58 @@ export function initBlackHoleGame(container: HTMLElement) {
 
     <div class="blackhole-hero">
       <div class="hero-copy">
-        <div class="eyebrow">toy-first arcade prototype</div>
+        <div class="eyebrow">concept-style arcade prototype</div>
         <h1>Чёрная дыра</h1>
-        <p class="subtitle">Веди дыру по району, засасывай всё, что меньше тебя, раскручивай комбо и дорасти до автобуса.</p>
+        <p class="subtitle">Один сильный toy: веди дыру по городу, засасывай всё, что меньше тебя, лови комбо и вырасти настолько, чтобы поглотить автобус.</p>
       </div>
-      <button id="restart-button" class="restart-button">Новый ран</button>
+      <button id="restart-button" class="hero-button">Новый ран</button>
     </div>
 
     <div class="hud-row">
-      <div class="hud-pill">⚫ Масса: <strong id="hud-mass">0</strong></div>
-      <div class="hud-pill">🔥 Комбо: <strong id="hud-combo">0</strong></div>
-      <div class="hud-pill">🗺 Район: <strong id="hud-district">Двор</strong></div>
-      <div class="hud-pill">❤ Жизни: <strong id="hud-lives">3</strong></div>
+      <div class="hud-pill">⚫ Масса <strong id="hud-mass">0</strong></div>
+      <div class="hud-pill">🔥 Комбо <strong id="hud-combo">0</strong></div>
+      <div class="hud-pill">🗺 Район <strong id="hud-district">Двор</strong></div>
+      <div class="hud-pill">❤ Жизни <strong id="hud-lives">3</strong></div>
     </div>
 
-    <div class="goal-card">
-      <div class="goal-topline">
-        <span class="goal-tag">Текущая цель</span>
-        <span id="goal-progress-text" class="goal-progress-text"></span>
+    <div class="scene-card" id="scene-card">
+      <div class="scene-background" aria-hidden="true">
+        <div class="district-mark district-a"></div>
+        <div class="district-mark district-b"></div>
+        <div class="district-mark district-c"></div>
+        <div class="lane lane-h"></div>
+        <div class="lane lane-v"></div>
+        <div class="light-pool light-a"></div>
+        <div class="light-pool light-b"></div>
       </div>
-      <div id="goal-main" class="goal-main"></div>
-      <div class="goal-bar">
-        <div id="goal-bar-fill" class="goal-bar-fill"></div>
-      </div>
-    </div>
 
-    <div class="arena-shell">
-      <div class="arena-backdrop" aria-hidden="true">
-        <div class="city-block block-a"></div>
-        <div class="city-block block-b"></div>
-        <div class="city-block block-c"></div>
-        <div class="road road-h"></div>
-        <div class="road road-v"></div>
-      </div>
+      <div class="floating-panel left-panel" id="district-panel"></div>
+      <div class="floating-panel right-panel" id="target-panel"></div>
+
       <div id="arena" class="arena" tabindex="0">
         <div id="hole-field" class="hole-field"></div>
         <div id="hole-core" class="hole-core"></div>
+      </div>
+
+      <div class="legend-row">
+        <div class="legend-title">Сейчас ешь:</div>
+        <div id="legend-track" class="legend-track"></div>
+      </div>
+
+      <div class="dock-panel">
+        <button id="boost-button" class="boost-button">Сингулярный рывок</button>
+        <div class="boost-status">
+          <div class="boost-label">Перегрузка</div>
+          <div class="boost-bar"><div id="boost-bar-fill" class="boost-bar-fill"></div></div>
+        </div>
+        <div class="tip-chip">WASD / мышь / тач</div>
       </div>
     </div>
 
     <div class="bottom-strip">
       <div class="control-card">
-        <div class="strip-title">Как играть</div>
-        <p>Води мышью, пальцем или WASD. Всасывай всё, что меньше тебя. Слишком крупные объекты отнимают жизнь.</p>
+        <div class="strip-title">Как работает toy</div>
+        <p>Мелкие объекты сами тянутся в радиус всасывания. Крупные — опасны, пока ты не вырос.</p>
       </div>
       <div class="control-card">
         <div class="strip-title">Рекорд</div>
@@ -82,7 +95,7 @@ export function initBlackHoleGame(container: HTMLElement) {
       </div>
       <div class="control-card">
         <div class="strip-title">Финал</div>
-        <p>Когда станешь достаточно большим — проглоти автобус и закрой ран победой.</p>
+        <p>Финальная цель — дорасти до автобуса и проглотить его без потери всех жизней.</p>
       </div>
     </div>
 
@@ -97,7 +110,11 @@ export function initBlackHoleGame(container: HTMLElement) {
   bindControls(arena);
   screen.querySelector<HTMLButtonElement>('#restart-button')?.addEventListener('click', () => {
     restartRunPreservingMeta();
+    resetBoost();
     showToast('Новый ран начался.', 'info');
+  });
+  screen.querySelector<HTMLButtonElement>('#boost-button')?.addEventListener('click', () => {
+    activateBoost();
   });
 
   state.subscribe(renderScene);
@@ -117,15 +134,17 @@ function bindControls(arena: HTMLDivElement) {
     }
     if (pointerActive) updatePointerTarget(arena, event.clientX, event.clientY);
   });
-  window.addEventListener('pointerup', () => {
-    pointerActive = false;
-  });
+  window.addEventListener('pointerup', () => { pointerActive = false; });
 
   window.addEventListener('keydown', (event) => {
     if (event.key === 'w' || event.key === 'ArrowUp') keyboard.up = true;
     if (event.key === 's' || event.key === 'ArrowDown') keyboard.down = true;
     if (event.key === 'a' || event.key === 'ArrowLeft') keyboard.left = true;
     if (event.key === 'd' || event.key === 'ArrowRight') keyboard.right = true;
+    if (event.code === 'Space') {
+      event.preventDefault();
+      activateBoost();
+    }
   });
   window.addEventListener('keyup', (event) => {
     if (event.key === 'w' || event.key === 'ArrowUp') keyboard.up = false;
@@ -133,6 +152,21 @@ function bindControls(arena: HTMLDivElement) {
     if (event.key === 'a' || event.key === 'ArrowLeft') keyboard.left = false;
     if (event.key === 'd' || event.key === 'ArrowRight') keyboard.right = false;
   });
+}
+
+function activateBoost() {
+  const current = state.get();
+  const now = Date.now();
+  if (current.gameOver || current.victory) return;
+  if (now < boostCooldownUntil) return;
+  boostActiveUntil = now + BOOST_DURATION_MS;
+  boostCooldownUntil = now + BOOST_COOLDOWN_MS;
+  showToast('Сингулярный рывок!', 'info');
+}
+
+function resetBoost() {
+  boostActiveUntil = 0;
+  boostCooldownUntil = 0;
 }
 
 function updatePointerTarget(arena: HTMLDivElement, clientX: number, clientY: number) {
@@ -147,7 +181,7 @@ function loop(now: number) {
 
   const current = state.get();
   const movement = getMovementVector(current.holeX, current.holeY);
-  const result = stepSimulation(dt, movement.x, movement.y);
+  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil);
 
   if (result.absorbed.length > 0) {
     const latest = result.absorbed[result.absorbed.length - 1];
@@ -165,7 +199,7 @@ function loop(now: number) {
   if (result.heavyHit) {
     showToast(
       result.heavyHit.gameOver
-        ? `Слишком тяжело. Ран окончен.`
+        ? 'Слишком тяжело. Ран окончен.'
         : `Слишком тяжело: ${result.heavyHit.label}`,
       'danger',
     );
@@ -207,6 +241,8 @@ function renderScene() {
   const holeRadius = getHoleRadius(current);
   const district = getCurrentDistrict(current);
   const progress = getProgressToNextLevel(current);
+  const now = Date.now();
+  const boostActive = now < boostActiveUntil;
 
   setText('hud-mass', String(Math.floor(current.mass)));
   setText('hud-combo', String(current.combo));
@@ -214,12 +250,55 @@ function renderScene() {
   setText('hud-lives', String(current.lives));
   setText('best-mass', String(Math.floor(current.bestMass)));
   setText('best-combo', String(current.bestCombo));
-  setText('goal-main', getCurrentGoalText(current));
-  setText('goal-progress-text', progress.next ? `${progress.current}/${progress.next}` : `цель достигнута`);
 
-  const goalBar = document.getElementById('goal-bar-fill');
-  if (goalBar) {
-    goalBar.style.width = `${progress.ratio * 100}%`;
+  const sceneCard = document.getElementById('scene-card');
+  if (sceneCard) {
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''}`;
+  }
+
+  const districtPanel = document.getElementById('district-panel');
+  if (districtPanel) {
+    districtPanel.innerHTML = `
+      <div class="panel-label">Район</div>
+      <div class="panel-title">${district.name}</div>
+      <div class="panel-text">${district.goal}</div>
+      <div class="panel-subtext">Сильный ход: сначала собирай безопасные объекты, потом переходи на более крупные цели.</div>
+    `;
+  }
+
+  const targetPanel = document.getElementById('target-panel');
+  if (targetPanel) {
+    targetPanel.innerHTML = `
+      <div class="panel-label">Цель роста</div>
+      <div class="panel-title">${getCurrentGoalText(current)}</div>
+      <div class="target-progress">${progress.next ? `${Math.floor(progress.current)} / ${progress.next}` : 'цель достигнута'}</div>
+      <div class="target-bar"><div class="target-bar-fill" style="width:${progress.ratio * 100}%"></div></div>
+      <div class="target-foot">Финальный ориентир: автобус. Слишком крупные объекты опасны, пока уровень размера не позволяет их съесть.</div>
+    `;
+  }
+
+  const legendTrack = document.getElementById('legend-track');
+  if (legendTrack) {
+    const edible = Object.values(OBJECT_TYPES).filter((item) => item.tier <= current.sizeLevel);
+    legendTrack.innerHTML = edible.map((item) => `<div class="legend-chip"><span>${item.emoji}</span><span>${item.label}</span></div>`).join('');
+  }
+
+  const boostFill = document.getElementById('boost-bar-fill');
+  const boostButton = document.getElementById('boost-button') as HTMLButtonElement | null;
+  if (boostFill) {
+    const ratio = now < boostCooldownUntil
+      ? 1 - Math.max(0, (boostCooldownUntil - now) / BOOST_COOLDOWN_MS)
+      : 1;
+    boostFill.style.width = `${ratio * 100}%`;
+  }
+  if (boostButton) {
+    const cooling = now < boostCooldownUntil;
+    boostButton.disabled = current.gameOver || current.victory || cooling;
+    boostButton.textContent = boostActive
+      ? 'Рывок активен'
+      : cooling
+        ? `Перезарядка ${Math.ceil((boostCooldownUntil - now) / 1000)}с`
+        : 'Сингулярный рывок';
   }
 
   const arena = document.getElementById('arena');
@@ -227,15 +306,37 @@ function renderScene() {
   const hole = document.getElementById('hole-core');
   if (!arena || !field || !hole) return;
 
-  field.style.width = `${holeRadius * 4.2}px`;
-  field.style.height = `${holeRadius * 4.2}px`;
-  field.style.left = `${current.holeX - holeRadius * 2.1}px`;
-  field.style.top = `${current.holeY - holeRadius * 2.1}px`;
+  const visualRadius = boostActive ? holeRadius * 1.28 : holeRadius;
+  field.style.width = `${visualRadius * 4.4}px`;
+  field.style.height = `${visualRadius * 4.4}px`;
+  field.style.left = `${current.holeX - visualRadius * 2.2}px`;
+  field.style.top = `${current.holeY - visualRadius * 2.2}px`;
 
   hole.style.width = `${holeRadius * 2}px`;
   hole.style.height = `${holeRadius * 2}px`;
   hole.style.left = `${current.holeX - holeRadius}px`;
   hole.style.top = `${current.holeY - holeRadius}px`;
+
+  const objectMap = new Map<string, number>();
+  current.objects.forEach((object) => {
+    objectMap.set(object.typeId, (objectMap.get(object.typeId) || 0) + 1);
+  });
+  const boardStatus = document.getElementById('board-status');
+  if (boardStatus) {
+    boardStatus.innerHTML = Array.from(objectMap.entries())
+      .map(([typeId, count]) => {
+        const def = OBJECT_TYPES[typeId as keyof typeof OBJECT_TYPES];
+        return `<span class="summary-chip ${def.tier <= current.sizeLevel ? 'edible' : 'danger'}">${def.emoji} ×${count}</span>`;
+      })
+      .join('');
+  }
+
+  const hint = document.getElementById('board-hint');
+  if (hint) {
+    hint.textContent = boostActive
+      ? 'Рывок активен — тяни объекты быстрее.'
+      : 'Двигайся к мелким объектам и избегай слишком крупных.';
+  }
 
   arena.querySelectorAll('.object-node').forEach((node) => node.remove());
   current.objects.forEach((object) => {
@@ -270,19 +371,20 @@ function renderOverlay() {
   root.innerHTML = `
     <div class="overlay-backdrop"></div>
     <div class="overlay-card">
-      <div class="overlay-title">${current.victory ? 'Район поглощён' : 'Чёрная дыра схлопнулась'}</div>
-      <p>${current.victory ? 'Ты вырос до размеров автобуса и поглотил главную цель.' : 'Слишком тяжёлые объекты трижды пробили твою стабильность.'}</p>
+      <div class="overlay-title">${current.victory ? 'Район поглощён' : 'Сингулярность схлопнулась'}</div>
+      <p>${current.victory ? 'Ты вырос до размеров автобуса и подчинил себе весь район.' : 'Ты столкнулся с объектами, которые были слишком велики для текущего размера.'}</p>
       <div class="overlay-stats">
         <span>Масса: <strong>${Math.floor(current.mass)}</strong></span>
         <span>Лучшее комбо: <strong>${current.bestCombo}</strong></span>
-        <span>Поглощено: <strong>${current.absorbedCount}</strong></span>
+        <span>Поглощено объектов: <strong>${current.absorbedCount}</strong></span>
       </div>
-      <button id="overlay-restart" class="restart-button large">Играть ещё</button>
+      <button id="overlay-restart" class="hero-button big">Играть ещё</button>
     </div>
   `;
 
   root.querySelector<HTMLButtonElement>('#overlay-restart')?.addEventListener('click', () => {
     restartRunPreservingMeta();
+    resetBoost();
     showToast('Новый ран начался.', 'info');
   });
 }

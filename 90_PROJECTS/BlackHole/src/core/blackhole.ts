@@ -69,7 +69,7 @@ export function getProgressToNextLevel(current = state.get()): { current: number
   return { current: current.mass, next: next.minMass, ratio: Math.max(0, Math.min(1, progress / range)) };
 }
 
-export function stepSimulation(dtMs: number, movementX: number, movementY: number): {
+export function stepSimulation(dtMs: number, movementX: number, movementY: number, boostActive = false): {
   absorbed: AbsorbEvent[];
   heavyHit?: HeavyHitEvent;
 } {
@@ -80,7 +80,8 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
 
   const dt = dtMs / 1000;
   const holeRadius = getHoleRadius(current);
-  const speed = Math.max(120, 260 - holeRadius * 1.2);
+  const effectiveRadius = boostActive ? holeRadius * 1.28 : holeRadius;
+  const speed = Math.max(120, 260 - holeRadius * 1.2) * (boostActive ? 1.22 : 1);
   let holeX = clamp(current.holeX + movementX * speed * dt, holeRadius, ARENA_WIDTH - holeRadius);
   let holeY = clamp(current.holeY + movementY * speed * dt, holeRadius, ARENA_HEIGHT - holeRadius);
 
@@ -120,13 +121,13 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
     const distance = Math.sqrt(dx * dx + dy * dy) || 1;
     const absorbable = def.tier <= sizeLevel;
 
-    if (absorbable && distance < holeRadius + 86) {
-      const pull = (holeRadius + 86 - distance) * 2.2 * dt;
+    if (absorbable && distance < effectiveRadius + 86) {
+      const pull = (effectiveRadius + 86 - distance) * (boostActive ? 3 : 2.2) * dt;
       object.x += (dx / distance) * pull * 22;
       object.y += (dy / distance) * pull * 22;
     }
 
-    if (absorbable && distance < holeRadius * 0.42 + def.radius * 0.52) {
+    if (absorbable && distance < effectiveRadius * 0.42 + def.radius * 0.52) {
       const now = Date.now();
       combo = now - lastAbsorbAt < 1500 ? combo + 1 : 1;
       lastAbsorbAt = now;

@@ -1,7 +1,7 @@
 # Black Hole
 
 **Жанр:** arcade growth / black hole toy  
-**Версия:** 0.1.0  
+**Версия:** 0.2.0  
 **Статус:** active toy-first pilot
 
 ## Что это
@@ -35,6 +35,7 @@ npm run dev
 - one-screen arcade loop;
 - управление мышью / пальцем / WASD;
 - радиус всасывания;
+- `Сингулярный рывок` с cooldown;
 - комбо;
 - прогрессия размера;
 - смена района;
