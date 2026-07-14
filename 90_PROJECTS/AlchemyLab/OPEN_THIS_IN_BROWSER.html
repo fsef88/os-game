@@ -13,7 +13,7 @@
       color: #fff;
     }
     body { padding: 16px; }
-    .app { max-width: 1180px; margin: 0 auto; }
+    .app { max-width: 1180px; margin: 0 auto; position: relative; }
     .hud, .panel { background: rgba(32,37,77,.92); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; box-shadow: 0 18px 36px rgba(0,0,0,.24); }
     .hud { position: sticky; top: 0; padding: 12px 14px; margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap; z-index: 10; }
     .chip { background: rgba(255,255,255,.08); border-radius: 999px; padding: 8px 12px; font-weight: 800; }
@@ -21,10 +21,12 @@
     .hero { display: grid; gap: 18px; margin-bottom: 16px; }
     .eyebrow { color: #f5c76c; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
     h1 { font-size: 36px; }
-    .subtitle { max-width: 780px; line-height: 1.55; opacity: .86; }
-    .objective-layout { display: grid; grid-template-columns: 1.2fr 1fr 0.9fr; gap: 14px; }
+    .subtitle { max-width: 780px; line-height: 1.55; opacity: .88; }
+    .hero-badges { display:flex; gap:10px; flex-wrap: wrap; }
+    .hero-badge { padding:8px 12px; border-radius:999px; background: rgba(255,255,255,.06); font-weight:700; color:#dcdcff; }
+    .objective-layout { display: grid; grid-template-columns: 1.2fr 1fr .9fr; gap: 14px; }
     .objective-card, .recipes-card, .daily-card, .order-card, .special-card, .mission-card { background: rgba(255,255,255,.06); border-radius: 18px; padding: 16px; }
-    .objective-eyebrow, .recipes-header { display: inline-block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #f5c76c; margin-bottom: 10px; }
+    .objective-eyebrow, .recipes-header, .section-title { display: inline-block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #f5c76c; margin-bottom: 10px; }
     .objective-card h3 { font-size: 22px; margin-bottom: 8px; }
     .objective-card p { line-height: 1.5; margin-bottom: 10px; }
     .objective-card ul { display: grid; gap: 8px; padding-left: 18px; }
@@ -34,16 +36,20 @@
     .recipe-part.target { color: #f5c76c; }
     .recipe-arrow { opacity: .65; font-size: 13px; }
     .daily-title { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .daily-track { display:flex; gap:6px; flex-wrap: wrap; margin: 12px 0; }
+    .daily-dot { width: 28px; height: 28px; border-radius: 999px; display:grid; place-items:center; font-size:12px; font-weight:800; background: rgba(255,255,255,.08); }
+    .daily-dot.active { background: linear-gradient(180deg,#f5c76c 0%, #e5a94b 100%); color:#1f1600; }
     .actions, .compact-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     button { border: 0; border-radius: 14px; min-height: 48px; padding: 12px 18px; font-size: 16px; font-weight: 800; cursor: pointer; transition: transform .1s ease, opacity .1s ease, box-shadow .12s ease; }
-    .gold { color: #1f1600; background: linear-gradient(180deg,#f5c76c 0%, #e5a94b 100%); }
-    .secondary, .mission-claim.secondary { color: #fff; background: rgba(255,255,255,.12); }
+    .gold, .gold-like { color: #1f1600; background: linear-gradient(180deg,#f5c76c 0%, #e5a94b 100%); }
+    .secondary { color: #fff; background: rgba(255,255,255,.12); }
     button:disabled { opacity: .45; cursor: not-allowed; }
     button.focus { box-shadow: 0 0 0 3px rgba(245,199,108,.32), 0 0 24px rgba(245,199,108,.24); }
     .layout { display: grid; grid-template-columns: 1.05fr 1.2fr 1fr; gap: 16px; }
     .panel-header { display:flex; justify-content:space-between; gap:12px; align-items:baseline; margin-bottom: 14px; }
+    .stage-stats { display:flex; gap:8px; flex-wrap: wrap; }
+    .stat-pill, .summary-chip { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.07); font-size: 13px; font-weight: 700; }
     .muted { opacity: .72; }
-    .summary-chip { padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.07); font-size: 13px; font-weight: 700; }
     .order-main, .mission-top { display:flex; justify-content:space-between; gap:12px; align-items:center; }
     .order-item { display:flex; gap:12px; align-items:center; }
     .order-emoji { font-size: 28px; }
@@ -52,7 +58,9 @@
     .order-progress, .mission-progress { padding:10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-weight:700; }
     .order-progress.ready, .mission-done .mission-progress { background: rgba(141,229,125,.16); box-shadow: inset 0 0 0 1px rgba(141,229,125,.24); }
     .formula-line { color:#f5c76c; font-weight:700; }
-    .board { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; }
+    .alchemy-table-shell { position: relative; padding: 18px; border-radius: 28px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.18)); overflow: hidden; }
+    .table-glow { position:absolute; inset: -20% 10% auto 10%; height:120px; background: radial-gradient(circle, rgba(127,213,255,.14), transparent 70%); pointer-events:none; }
+    .board { position: relative; display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; z-index: 1; }
     .cell { min-height:118px; border-radius:16px; display:grid; gap:8px; place-content:center; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.14)); border:2px solid transparent; color:#fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
     .cell.locked { opacity:.35; }
     .cell.empty { color: rgba(255,255,255,.4); }
@@ -67,6 +75,10 @@
     .toast.info { background: rgba(127,213,255,.18); border: 1px solid rgba(127,213,255,.45); }
     .toast.success { background: rgba(141,229,125,.16); border: 1px solid rgba(141,229,125,.42); }
     .toast.magic { background: rgba(216,168,255,.16); border: 1px solid rgba(216,168,255,.42); }
+    .orb { position:absolute; border-radius:999px; filter: blur(28px); pointer-events:none; opacity:.55; }
+    .orb-a { width:120px; height:120px; background: rgba(127,213,255,.14); top:80px; left:-20px; }
+    .orb-b { width:160px; height:160px; background: rgba(216,168,255,.11); top:360px; right:20px; }
+    .orb-c { width:120px; height:120px; background: rgba(245,199,108,.10); bottom:40px; left:28%; }
     @keyframes mergeFlash { 0% { transform: scale(.94); box-shadow: 0 0 0 0 rgba(245,199,108,.45); } 60% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(245,199,108,0); } 100% { transform: scale(1); } }
     @media (max-width: 1080px) { .objective-layout, .layout { grid-template-columns: 1fr; } }
     @media (max-width: 640px) { h1 { font-size: 28px; } .order-main, .mission-top { flex-direction: column; align-items: flex-start; } .cell { min-height: 96px; } }
@@ -74,7 +86,9 @@
 </head>
 <body>
   <div class="app">
+    <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div>
     <div id="toastWrap" class="toast-wrap"></div>
+
     <div class="hud">
       <div class="chip">✨ Эссенция: <span id="essence">0</span></div>
       <div class="chip">📘 Открытия: <span id="discoveriesCount">0</span></div>
@@ -84,22 +98,28 @@
 
     <section class="panel hero">
       <div>
-        <div class="eyebrow">Автономный пилот 1.0</div>
+        <div class="eyebrow">vertical slice 1.0</div>
         <h1>Алхимическая мастерская</h1>
-        <p class="subtitle">Собирай искры, объединяй одинаковые элементы, выполняй обычные и особые заказы, открывай формулы и развивай лабораторию. Всё прямо здесь, без npm и без dev-server.</p>
+        <p class="subtitle">Это уже не техдемка. Здесь есть понятный первый цикл, обычные и особые заказы, бонус дня, поручения алхимика и ощущение роста через открытия и награды.</p>
+      </div>
+      <div class="hero-badges">
+        <div class="hero-badge">✨ слияния</div>
+        <div class="hero-badge">📜 заказы</div>
+        <div class="hero-badge">🌙 особые контракты</div>
+        <div class="hero-badge">📘 журнал</div>
       </div>
 
       <div class="objective-layout">
         <div id="objectiveCard" class="objective-card"></div>
         <div class="recipes-card">
-          <div class="recipes-header">Быстрые рецепты</div>
+          <div class="recipes-header">Книга рецептов</div>
           <div id="recipeRail" class="recipe-rail"></div>
         </div>
         <div id="dailyCard" class="daily-card"></div>
       </div>
 
       <div class="actions">
-        <button id="gatherBtn" class="gold">Создать искру</button>
+        <button id="gatherBtn" class="gold">Призвать искру</button>
         <button id="fulfillBtn" class="secondary">Сдать заказ</button>
         <button id="specialBtn" class="secondary">Сдать особый контракт</button>
       </div>
@@ -108,15 +128,15 @@
     <section class="layout">
       <div class="panel side-stack">
         <div>
-          <h2>Текущий заказ</h2>
+          <div class="section-title">Обычный заказ</div>
           <div id="orderCard" class="order-card"></div>
         </div>
         <div>
-          <h2>Особый контракт</h2>
+          <div class="section-title">Особый контракт</div>
           <div id="specialCard" class="special-card"></div>
         </div>
         <div>
-          <h2>Улучшения</h2>
+          <div class="section-title">Улучшения</div>
           <div class="compact-actions">
             <button id="unlockBtn" class="secondary">Открыть клетку</button>
             <button id="catalystBtn" class="secondary">Усилить катализатор</button>
@@ -126,20 +146,29 @@
 
       <div class="panel">
         <div class="panel-header">
-          <h2>Алхимический стол</h2>
-          <span id="boardHint" class="muted"></span>
+          <div>
+            <div class="section-title">Стол слияния</div>
+            <div id="boardHint" class="muted"></div>
+          </div>
+          <div class="stage-stats">
+            <span class="stat-pill">Уровень: <strong id="labLevelInline">1</strong></span>
+            <span class="stat-pill">Редкий шанс: <strong id="rareChanceInline">0%</strong></span>
+          </div>
         </div>
         <div id="boardStatus" class="board-status"></div>
-        <div id="board" class="board"></div>
+        <div class="alchemy-table-shell">
+          <div class="table-glow"></div>
+          <div id="board" class="board"></div>
+        </div>
       </div>
 
       <div class="panel right-stack">
         <div>
-          <h2>Журнал открытий</h2>
+          <div class="section-title">Журнал открытий</div>
           <div id="journal" class="journal"></div>
         </div>
         <div>
-          <h2>Поручения алхимика</h2>
+          <div class="section-title">Поручения алхимика</div>
           <div id="missions" class="missions"></div>
         </div>
       </div>
@@ -147,7 +176,7 @@
   </div>
 
   <script>
-    const KEY = 'alchemy_lab_standalone_save_v10';
+    const KEY = 'alchemy_lab_standalone_game_v10';
     const CONFIG = { startingUnlockedCells: 6, unlockCellCosts: [12,28,55], catalystBaseCost: 16, catalystCostGrowth: 1.85, catalystRewardBonus: .25, dailyClaimWindowHours: 20 };
     const ITEMS = [
       { tier: 0, name: 'Искра', emoji: '✨', color: '#f7d774', description: 'Базовый элемент для всех первых рецептов.' },
@@ -157,21 +186,21 @@
       { tier: 4, name: 'Солнечный эликсир', emoji: '🧪', color: '#ffbe6b', description: 'Главное зелье вертикального среза.' }
     ];
     const ORDER_REWARDS = { 1: 12, 2: 28, 3: 65, 4: 150 };
-    const DAILY_REWARDS = [8,12,18,25,40,65,100];
+    const DAILY_REWARDS = [8, 12, 18, 25, 40, 65, 100];
     const MISSIONS = [
       { id: 'mission_first_merge', title: 'Первое слияние', description: 'Сделай 1 merge', reward: 8, target: 1 },
       { id: 'mission_two_orders', title: 'Первые заказы', description: 'Выполни 2 заказа', reward: 18, target: 2 },
       { id: 'mission_three_discoveries', title: 'Журнал алхимика', description: 'Открой 3 формулы', reward: 25, target: 3 },
-      { id: 'mission_special_contract', title: 'Особый контракт', description: 'Выполни 1 особый заказ', reward: 40, target: 1 },
+      { id: 'mission_special_contract', title: 'Особый контракт', description: 'Выполни 1 особый заказ', reward: 40, target: 1 }
     ];
-    const gridSize = 9;
+
     let selectedIndex = null;
     let flashCellIndex = null;
     let toastState = null;
     let toastTimer = null;
 
     function createInitialState() {
-      const grid = Array.from({ length: gridSize }, () => null);
+      const grid = Array.from({ length: 9 }, () => null);
       grid[0] = 0;
       return {
         essence: 0,
@@ -204,15 +233,6 @@
     const state = load();
 
     function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
-    function showToast(text, tone) {
-      toastState = { text, tone };
-      renderToast();
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toastState = null; renderToast(); }, 1700);
-    }
-    function renderToast() {
-      document.getElementById('toastWrap').innerHTML = toastState ? `<div class="toast ${toastState.tone}">${toastState.text}</div>` : '';
-    }
     function catalystMultiplier(level = state.catalystLevel) { return 1 + level * CONFIG.catalystRewardBonus; }
     function catalystCost(level = state.catalystLevel) { return Math.round(CONFIG.catalystBaseCost * Math.pow(CONFIG.catalystCostGrowth, level)); }
     function unlockCost() { return CONFIG.unlockCellCosts[state.unlockedCells - CONFIG.startingUnlockedCells] ?? null; }
@@ -246,6 +266,16 @@
       };
       return MISSIONS.map(m => ({ ...m, progress: Math.min(metric[m.id], m.target), completed: metric[m.id] >= m.target, claimed: state.claimedMissionIds.includes(m.id) }));
     }
+    function showToast(text, tone) {
+      toastState = { text, tone };
+      renderToast();
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastState = null; renderToast(); }, 1700);
+    }
+    function renderToast() {
+      document.getElementById('toastWrap').innerHTML = toastState ? `<div class="toast ${toastState.tone}">${toastState.text}</div>` : '';
+    }
+
     function claimMission(id) {
       const mission = missionViews().find(m => m.id === id);
       if (!mission || !mission.completed || mission.claimed) return;
@@ -255,6 +285,7 @@
       showToast(`Поручение закрыто: +${mission.reward} эссенции`, 'success');
       render();
     }
+
     function claimDaily() {
       if (!canClaimDaily()) return;
       const { day, reward } = currentDailyReward();
@@ -266,6 +297,7 @@
       showToast(`Бонус дня ${day}: +${reward} эссенции`, 'success');
       render();
     }
+
     function gather() {
       const idx = firstEmpty();
       if (idx === -1) return;
@@ -274,9 +306,10 @@
       state.grid[idx] = tier;
       state.gatheredCount += 1;
       save();
-      showToast(rare ? `Редкая удача! Сразу создана ${ITEMS[tier].name}.` : (countTier(0) >= 2 ? 'Теперь объедини две искры.' : 'Новая искра появилась на столе.'), rare ? 'magic' : 'info');
+      showToast(rare ? `Редкая удача! Сразу создана ${ITEMS[tier].name}.` : (countTier(0) >= 2 ? 'Теперь соедини две искры.' : 'На столе появилась новая искра.'), rare ? 'magic' : 'info');
       render();
     }
+
     function interact(index) {
       if (index >= state.unlockedCells) return;
       const value = state.grid[index];
@@ -302,6 +335,7 @@
       render();
       setTimeout(() => { flashCellIndex = null; render(); }, 520);
     }
+
     function fulfill() {
       const idx = state.grid.findIndex((v, i) => i < state.unlockedCells && v === state.currentOrder.tier);
       if (idx === -1) return;
@@ -315,6 +349,7 @@
       showToast(`Заказ выполнен: +${reward} эссенции`, 'success');
       render();
     }
+
     function fulfillSpecial() {
       if (!state.specialContract) return;
       const idx = state.grid.findIndex((v, i) => i < state.unlockedCells && v === state.specialContract.tier);
@@ -328,6 +363,7 @@
       showToast(`Особый контракт закрыт: +${reward} эссенции`, 'magic');
       render();
     }
+
     function unlockCell() {
       const cost = unlockCost();
       if (cost === null || state.essence < cost) return;
@@ -337,6 +373,7 @@
       showToast(`Открыта новая клетка. Теперь доступно ${state.unlockedCells} мест.`, 'success');
       render();
     }
+
     function upgradeCatalyst() {
       const cost = catalystCost();
       if (state.essence < cost) return;
@@ -360,53 +397,53 @@
       const progress = orderProgress();
       const sp = specialProgress();
       let title = 'Что делать сейчас';
-      let body = 'Собирай ингредиенты, объединяй одинаковые элементы и превращай открытия в награду через заказы.';
+      let body = 'Собирай ингредиенты, объединяй одинаковые элементы и превращай открытия в награду.';
       let bullets = [];
       let focus = { gather:false, fulfill:false, special:false, unlock:false, catalyst:false };
 
       if (state.ordersCompleted === 0 && state.mergesCompleted === 0 && sparkCount < 2) {
-        title = 'Шаг 1 — создай вторую искру';
+        title = 'Шаг 1 — призови вторую искру';
         body = 'На столе уже лежит 1 искра. Нажми главную кнопку ещё раз, чтобы получить пару для первого слияния.';
-        bullets = ['Первые секунды должны вести к одному очевидному действию.', 'Сейчас тебе нужен только второй базовый элемент.'];
+        bullets = ['Первое действие должно быть очевидным без чтения правил.', 'Сейчас тебе нужен только второй базовый элемент.'];
         focus.gather = true;
       } else if (state.ordersCompleted === 0 && state.mergesCompleted === 0) {
         title = 'Шаг 2 — сделай первое слияние';
         body = selectedIndex === null ? 'Тапни по одной искре, потом по второй. Две одинаковые искры превращаются в Свет-траву.' : 'Одна искра уже выбрана. Тапни по второй такой же — получишь Свет-траву.';
-        bullets = ['Игрок играет ради открытия нового объекта, а не ради самого merge.', 'Один шаг = одно действие.'];
+        bullets = ['Игрок играет ради открытия нового объекта.', 'Один шаг = одно действие.'];
       } else if (state.ordersCompleted === 0 && progress.completed) {
         title = 'Шаг 3 — сдай первый заказ';
         body = 'Свет-трава уже лежит на столе. Нажми «Сдать заказ» и получи первую эссенцию.';
-        bullets = ['Первая награда должна прийти быстро.', 'После неё появится первый мета-выбор.'];
+        bullets = ['Первая награда должна прийти быстро.', 'После неё появляется первый мета-выбор.'];
         focus.fulfill = true;
       } else if (canClaimDaily()) {
         const daily = currentDailyReward();
         title = 'Забери бонус дня';
         body = `Сегодня доступен бонус: +${daily.reward} эссенции.`;
-        bullets = ['Retention-слой не должен мешать core loop.', 'Бонус встроен прямо в основной экран.'];
+        bullets = ['Retention встроен прямо в игру.', 'Забери награду и продолжай основной цикл.'];
       } else if (sp.active && sp.completed) {
         title = 'Особый контракт готов';
         body = 'На столе уже есть нужный редкий ингредиент. Сдай его за крупную награду.';
-        bullets = ['Это макро-награда поверх обычного цикла.', 'Редкие моменты должны ощущаться сильнее.'];
+        bullets = ['Это макро-награда поверх обычного цикла.', 'Редкие события должны ощущаться сильнее повседневных действий.'];
         focus.special = true;
       } else if (missionViews().some(m => m.completed && !m.claimed)) {
-        title = 'Забери награду за поручение';
-        body = 'Одно из поручений уже выполнено. Получи бонусную эссенцию и ускорь следующий цикл.';
-        bullets = ['Микро-цели удерживают темп.', 'Поручения не блокируют игру.'];
+        title = 'Поручение уже выполнено';
+        body = 'Одна из задач алхимика закрыта. Забери бонусную эссенцию и ускорь следующий цикл.';
+        bullets = ['Микро-цели удерживают темп.', 'Поручения усиливают core loop.'];
       } else if (unlockCost() !== null && state.essence >= unlockCost()) {
         title = 'Открой новую клетку';
         body = 'Больше места на столе = меньше тупиков и длиннее цепочки слияний.';
-        bullets = ['Расширение пространства — главный ранний мета-апгрейд.', 'Игрок замечает его сразу.'];
+        bullets = ['Это главный ранний мета-апгрейд.', 'Игрок замечает его сразу.'];
         focus.unlock = true;
       } else if (state.essence >= catalystCost()) {
         title = 'Усиль катализатор';
-        body = `Катализатор повышает награды и даёт шанс редкого появления. Сейчас шанс редкой генерации: ${(rareSpawnChance() * 100).toFixed(0)}%.`;
-        bullets = [`Следующий множитель наград: x${(catalystMultiplier() + .25).toFixed(2)}.`, 'Это добавляет variable reward без перегруза.'];
+        body = `Катализатор повышает награды и даёт шанс редкого появления. Сейчас редкий шанс: ${(rareSpawnChance() * 100).toFixed(0)}%.`;
+        bullets = [`Следующий множитель наград: x${(catalystMultiplier() + .25).toFixed(2)}.`, 'Это усиливает reward loop без лишнего friction.'];
         focus.catalyst = true;
       } else {
         const item = ITEMS[state.currentOrder.tier];
         title = `Следующая цель — ${item.name}`;
-        body = `Собери нужный tier для текущего заказа, а затем открой ещё одну формулу.`;
-        bullets = ['Смотри на быстрые рецепты справа.', `Уровень лаборатории сейчас: ${labLevel()}.`];
+        body = `Собери нужный tier для текущего заказа, а затем постарайся открыть ещё одну формулу.`;
+        bullets = ['Смотри на книгу рецептов рядом со столом.', `Уровень лаборатории сейчас: ${labLevel()}.`];
         focus.gather = true;
       }
 
@@ -419,7 +456,7 @@
     }
 
     function renderRecipes() {
-      document.getElementById('recipeRail').innerHTML = ITEMS.slice(0, -1).map((item) => {
+      document.getElementById('recipeRail').innerHTML = ITEMS.slice(0, -1).map(item => {
         const next = ITEMS[item.tier + 1];
         return `<div class="recipe-chip"><span class="recipe-part">${item.emoji} ${item.name}</span><span class="recipe-arrow">×2 →</span><span class="recipe-part target">${next.emoji} ${next.name}</span></div>`;
       }).join('');
@@ -429,10 +466,15 @@
       const { day, reward } = currentDailyReward();
       const available = canClaimDaily();
       document.getElementById('dailyCard').innerHTML = `
-        <div class="recipes-header">Бонус дня</div>
+        <div class="section-title">Бонус дня</div>
         <div class="daily-title">День ${day}</div>
         <div class="muted">Серия входов: ${state.dailyStreak} · награда: +${reward} эссенции</div>
-        <div style="margin-top:12px;"><button id="dailyClaimBtn" class="${available ? 'gold' : 'secondary'}" ${available ? '' : 'disabled'}>${available ? 'Забрать бонус' : 'Уже получено'}</button></div>
+        <div class="daily-track">${Array.from({length:7}).map((_, index) => {
+          const dayNumber = index + 1;
+          const active = ((state.dailyDay - 1) % 7) + 1 === dayNumber;
+          return `<span class="daily-dot ${active ? 'active' : ''}">${dayNumber}</span>`;
+        }).join('')}</div>
+        <button id="dailyClaimBtn" class="${available ? 'gold-like' : 'secondary'}" ${available ? '' : 'disabled'}>${available ? 'Забрать бонус' : 'Уже получено'}</button>
       `;
       document.getElementById('dailyClaimBtn')?.addEventListener('click', claimDaily);
     }
@@ -467,7 +509,7 @@
         </div>
         <div class="order-progress ${progress.completed ? 'ready' : ''}">На столе: ${progress.have}/1</div>
         <div class="formula-line">Формула: 2 ${prev.name} → ${order.name}</div>
-        <div class="muted">Особые контракты дают сильный reward spike.</div>
+        <div class="muted">Редкая награда поверх обычного цикла.</div>
       `;
     }
 
@@ -480,7 +522,7 @@
       }
       const status = document.getElementById('boardStatus');
       if (entries.size === 0) {
-        status.innerHTML = '<span class="summary-chip muted">Стол пуст — создай искру.</span>';
+        status.innerHTML = '<span class="summary-chip muted">Стол пуст — призови искру.</span>';
         return;
       }
       status.innerHTML = Array.from(entries.entries()).sort((a,b)=>a[0]-b[0]).map(([tier,count]) => `<span class="summary-chip">${ITEMS[tier].emoji} ${ITEMS[tier].name} ×${count}</span>`).join('');
@@ -542,7 +584,7 @@
             <div class="mission-reward">+${mission.reward}</div>
           </div>
           <div class="mission-progress">${mission.progress}/${mission.target}</div>
-          <button class="mission-claim ${mission.completed && !mission.claimed ? 'gold' : 'secondary'}" ${mission.completed && !mission.claimed ? '' : 'disabled'}>${mission.claimed ? 'Получено' : mission.completed ? 'Забрать' : 'Не готово'}</button>
+          <button class="mission-claim ${mission.completed && !mission.claimed ? 'gold-like' : 'secondary'}" ${mission.completed && !mission.claimed ? '' : 'disabled'}>${mission.claimed ? 'Получено' : mission.completed ? 'Забрать' : 'Не готово'}</button>
         `;
         el.querySelector('.mission-claim')?.addEventListener('click', () => claimMission(mission.id));
         wrap.appendChild(el);
@@ -568,6 +610,8 @@
       document.getElementById('discoveriesCount').textContent = Math.max(0, state.discoveries.length - 1);
       document.getElementById('ordersCompleted').textContent = state.ordersCompleted + state.specialOrdersCompleted;
       document.getElementById('labLevel').textContent = labLevel();
+      document.getElementById('labLevelInline').textContent = labLevel();
+      document.getElementById('rareChanceInline').textContent = `${Math.round(rareSpawnChance() * 100)}%`;
     }
 
     function render() {

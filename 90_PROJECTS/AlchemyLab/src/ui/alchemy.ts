@@ -36,76 +36,92 @@ export function initAlchemyLab(container: HTMLElement) {
   const screen = document.createElement('section');
   screen.className = 'alchemy-screen';
   screen.innerHTML = `
+    <div class="lab-ambient" aria-hidden="true">
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+      <div class="orb orb-c"></div>
+    </div>
+
     <div id="toast-layer" class="toast-layer"></div>
 
-    <div class="panel hero-panel">
-      <div>
-        <p class="eyebrow">Основной тематический пилот</p>
+    <div class="panel hero-panel game-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">vertical slice 1.1</p>
         <h1>Алхимическая мастерская</h1>
-        <p class="subtitle">Собирай искры, объединяй одинаковые ингредиенты, закрывай обычные и особые заказы, открывай формулы и развивай лабораторию.</p>
+        <p class="subtitle">
+          Не таблица и не дашборд: это маленькая магическая игра про открытия.
+          Призывай искры, соединяй одинаковые элементы, закрывай заказы и охоться за редкими контрактами.
+        </p>
       </div>
-
-      <div class="objective-layout">
-        <div id="objective-card" class="objective-card"></div>
-        <div class="recipes-card">
-          <div class="recipes-header">Быстрые рецепты</div>
-          <div id="recipe-rail" class="recipe-rail"></div>
-        </div>
-        <div id="daily-card" class="daily-card"></div>
-      </div>
-
-      <div class="button-row hero-actions">
-        <button id="gather-button">Создать искру</button>
-        <button id="fulfill-button" class="secondary">Сдать заказ</button>
-        <button id="special-button" class="secondary">Сдать особый контракт</button>
+      <div class="hero-badges">
+        <div class="hero-badge">✨ merge</div>
+        <div class="hero-badge">📜 заказы</div>
+        <div class="hero-badge">📘 открытия</div>
+        <div class="hero-badge">🌙 особые контракты</div>
       </div>
     </div>
 
-    <div class="alchemy-grid-layout">
-      <div class="panel side-panel">
-        <div class="side-stack">
-          <div>
-            <h2>Текущий заказ</h2>
-            <div id="order-card" class="order-card"></div>
-          </div>
+    <div class="game-layout">
+      <aside class="panel parchment-panel">
+        <div id="objective-card" class="objective-ribbon"></div>
 
-          <div>
-            <h2>Особый контракт</h2>
-            <div id="special-card" class="special-card"></div>
-          </div>
+        <div class="side-section">
+          <div class="section-title">Обычный заказ</div>
+          <div id="order-card" class="order-card quest-card"></div>
+        </div>
 
-          <div>
-            <h2>Улучшения</h2>
-            <div class="button-column compact-actions">
-              <button id="unlock-button" class="secondary">Открыть клетку</button>
-              <button id="catalyst-button" class="secondary">Усилить катализатор</button>
-            </div>
+        <div class="side-section">
+          <div class="section-title">Особый контракт</div>
+          <div id="special-card" class="special-card quest-card"></div>
+        </div>
+
+        <div id="daily-card" class="daily-card"></div>
+      </aside>
+
+      <main class="table-stage">
+        <div class="stage-topline">
+          <div class="stage-title-wrap">
+            <div class="stage-title">Стол слияния</div>
+            <div id="board-hint" class="stage-hint"></div>
+          </div>
+          <div class="stage-stats">
+            <span class="stat-pill">Уровень лаборатории: <strong id="lab-level-inline">1</strong></span>
+            <span class="stat-pill">Редкий шанс: <strong id="rare-chance-inline">0%</strong></span>
           </div>
         </div>
-      </div>
 
-      <div class="panel board-panel">
-        <div class="panel-header">
-          <h2>Алхимический стол</h2>
-          <span id="board-hint" class="hint"></span>
+        <div class="recipe-strip-wrap">
+          <div class="section-title small">Книга рецептов</div>
+          <div id="recipe-rail" class="recipe-rail"></div>
         </div>
+
         <div id="board-status" class="board-status"></div>
-        <div id="alchemy-board" class="alchemy-board"></div>
-      </div>
 
-      <div class="panel right-panel">
-        <div class="right-stack">
-          <div>
-            <h2>Журнал открытий</h2>
-            <div id="journal-list" class="journal-list"></div>
-          </div>
-
-          <div>
-            <h2>Поручения алхимика</h2>
-            <div id="missions-list" class="missions-list"></div>
-          </div>
+        <div class="alchemy-table-shell">
+          <div class="table-glow"></div>
+          <div id="alchemy-board" class="alchemy-board"></div>
         </div>
-      </div>
+
+        <div class="action-dock">
+          <button id="gather-button" class="primary-cta">Призвать искру</button>
+          <button id="fulfill-button" class="secondary">Сдать заказ</button>
+          <button id="special-button" class="secondary">Сдать особый контракт</button>
+          <button id="unlock-button" class="secondary">Открыть клетку</button>
+          <button id="catalyst-button" class="secondary">Усилить катализатор</button>
+        </div>
+      </main>
+
+      <aside class="panel codex-panel">
+        <div class="codex-section">
+          <div class="section-title">Журнал открытий</div>
+          <div id="journal-list" class="journal-list"></div>
+        </div>
+
+        <div class="codex-section">
+          <div class="section-title">Поручения алхимика</div>
+          <div id="missions-list" class="missions-list"></div>
+        </div>
+      </aside>
     </div>
   `;
 
@@ -116,13 +132,16 @@ export function initAlchemyLab(container: HTMLElement) {
     if (!result.ok) return;
 
     if (result.rare && result.tier !== undefined) {
-      showToast(`Редкая удача! Сразу создан ${ALCHEMY_ITEMS[result.tier].name}.`, 'magic');
+      showToast(`Редкая удача! Сразу создан: ${ALCHEMY_ITEMS[result.tier].name}`, 'magic');
       renderAlchemyLab();
       return;
     }
 
     const sparkCount = getItemCountOnBoard(0);
-    showToast(sparkCount >= 2 ? 'Теперь объедини две искры.' : 'Новая искра появилась на столе.', 'info');
+    showToast(
+      sparkCount >= 2 ? 'Теперь соедини две искры.' : 'На столе появилась новая искра.',
+      'info',
+    );
   });
 
   screen.querySelector<HTMLButtonElement>('#fulfill-button')?.addEventListener('click', () => {
@@ -163,6 +182,7 @@ function renderAlchemyLab() {
   renderJournal();
   renderMissions();
   renderButtons();
+  renderInlineStats();
   renderToast();
 }
 
@@ -175,56 +195,83 @@ function renderObjective() {
   if (!objective) return;
 
   let title = 'Что делать сейчас';
-  let body = 'Собирай ингредиенты, объединяй одинаковые элементы и превращай открытия в награду через заказы.';
+  let body = 'Собирай ингредиенты, делай merge и превращай открытия в награду.';
   let bullets: string[] = [];
   let focus: Array<'gather' | 'fulfill' | 'special' | 'unlock' | 'catalyst' | 'spark-cells' | 'merge-match'> = [];
 
   if (current.ordersCompleted === 0 && current.mergesCompleted === 0 && sparkCount < 2) {
-    title = 'Шаг 1 — создай вторую искру';
-    body = 'На столе уже лежит 1 искра. Нажми главную кнопку ещё один раз, чтобы получить пару для первого merge.';
-    bullets = ['Первые 10 секунд должны вести к одному очевидному действию.', 'Сейчас тебе нужен только второй базовый элемент.'];
+    title = 'Шаг 1 — призови вторую искру';
+    body = 'На столе уже лежит 1 искра. Нажми большую кнопку ещё раз, чтобы получить пару для первого слияния.';
+    bullets = [
+      'Первое действие должно быть очевидным без чтения длинных правил.',
+      'Сейчас тебе нужен только второй базовый элемент.',
+    ];
     focus = ['gather'];
   } else if (current.ordersCompleted === 0 && current.mergesCompleted === 0) {
     title = 'Шаг 2 — сделай первое слияние';
     body = selectedIndex === null
       ? 'Тапни по одной искре, потом по второй. Две одинаковые искры превращаются в Свет-траву.'
       : 'Одна искра уже выбрана. Тапни по второй такой же — получишь Свет-траву.';
-    bullets = ['Игрок играет ради открытия нового объекта, а не ради самого merge.', 'Один шаг = одно действие.'];
+    bullets = [
+      'Игрок играет ради открытия нового объекта, а не ради самого merge.',
+      'Один шаг = одно действие.',
+    ];
     focus = selectedIndex === null ? ['spark-cells'] : ['merge-match'];
   } else if (current.ordersCompleted === 0 && orderProgress.completed) {
     title = 'Шаг 3 — сдай первый заказ';
     body = 'Свет-трава уже лежит на столе. Нажми «Сдать заказ» и получи первую эссенцию.';
-    bullets = ['Награда должна прийти сразу после первого понятного действия.', 'Первая эссенция открывает мета-выбор: место или усиление.'];
+    bullets = [
+      'Первая награда должна прийти быстро и заметно.',
+      'После этого у тебя появится первый мета-выбор.',
+    ];
     focus = ['fulfill'];
   } else if (canClaimDailyReward()) {
     const daily = getCurrentDailyReward();
     title = 'Забери бонус дня';
-    body = `Сегодня доступен дневной бонус: +${daily.reward} эссенции. Это мягкий retention-слой без лишнего friction.`;
-    bullets = ['Награда за вход не мешает core loop, а усиливает его.', 'Лучше показать бонус в игре, а не уводить в отдельный экран.'];
+    body = `Сегодня доступен бонус: +${daily.reward} эссенции.`;
+    bullets = [
+      'Retention-слой встроен прямо в игру и не уводит в отдельный экран.',
+      'Забери награду и сразу вернись к основному loop.',
+    ];
   } else if (specialProgress.active && specialProgress.completed) {
     title = 'Особый контракт готов';
-    body = 'На столе уже есть нужный редкий ингредиент. Сдай особый контракт, чтобы получить большую награду.';
-    bullets = ['Особый контракт — макро-награда поверх обычных заказов.', 'Это первый эмоциональный spike после базового loop.'];
+    body = 'На столе уже есть нужный редкий ингредиент. Сдай его за крупную награду.';
+    bullets = [
+      'Это сильный reward spike поверх обычного цикла.',
+      'Редкие события должны ощущаться ценнее повседневных действий.',
+    ];
     focus = ['special'];
   } else if (getMissionViews().some((mission) => mission.completed && !mission.claimed)) {
-    title = 'Забери награду за поручение';
-    body = 'Одно из поручений алхимика уже выполнено. Получи бонусную эссенцию и ускорь следующую цель.';
-    bullets = ['Микро-цели удерживают темп первой сессии.', 'Поручения не должны блокировать игру.'];
+    title = 'Поручение уже выполнено';
+    body = 'Одна из задач алхимика закрыта. Забери бонусную эссенцию и ускорь следующий цикл.';
+    bullets = [
+      'Микро-цели удерживают темп первой сессии.',
+      'Поручения усиливают core loop, а не отвлекают от него.',
+    ];
   } else if (getUnlockNextCellCost() !== null && current.essence >= (getUnlockNextCellCost() || Infinity)) {
     title = 'Открой новую клетку';
-    body = 'Свободное место на столе — главный ранний мета-апгрейд. Больше клеток = меньше тупиков и длиннее цепочки.';
-    bullets = ['Расширение пространства игрок замечает сразу.', 'Новый контент должен приходить в первые 1–2 минуты.'];
+    body = 'Больше места на столе = меньше тупиков и длиннее цепочки слияний.';
+    bullets = [
+      'Расширение пространства — главный ранний мета-апгрейд.',
+      'Игрок замечает новую клетку сразу, без объяснений.',
+    ];
     focus = ['unlock'];
   } else if (current.essence >= getCatalystUpgradeCost()) {
     title = 'Усиль катализатор';
-    body = `Катализатор повышает награды за заказы. Текущий множитель после апгрейда станет x${(getCatalystMultiplier() + 0.25).toFixed(2)}.`;
-    bullets = ['Апгрейд должен заметно усиливать reward loop.', `Редкий шанс при сборе сейчас: ${(getRareSpawnChance() * 100).toFixed(0)}%.`];
+    body = `Катализатор повышает награды и даёт шанс редкого появления. Сейчас редкий шанс: ${(getRareSpawnChance() * 100).toFixed(0)}%.`;
+    bullets = [
+      `Следующий множитель наград: x${(getCatalystMultiplier() + 0.25).toFixed(2)}.`,
+      'Это усиливает reward loop без лишнего friction.',
+    ];
     focus = ['catalyst'];
   } else {
     const orderItem = ALCHEMY_ITEMS[current.currentOrder.tier];
     title = `Следующая цель — ${orderItem.name}`;
     body = `Собери нужный tier для текущего заказа, а затем постарайся открыть ещё одну формулу для журнала.`;
-    bullets = ['Смотри на быстрые рецепты справа.', `Уровень лаборатории сейчас: ${getLabLevel(current)}.`];
+    bullets = [
+      'Смотри на книгу рецептов рядом со столом.',
+      `Уровень лаборатории сейчас: ${getLabLevel(current)}.`,
+    ];
     focus = ['gather'];
   }
 
@@ -258,27 +305,29 @@ function renderRecipes() {
 function renderDailyCard() {
   const card = document.getElementById('daily-card');
   if (!card) return;
+
   const current = state.get();
   const daily = getCurrentDailyReward();
   const available = canClaimDailyReward();
 
   card.innerHTML = `
-    <div class="recipes-header">Бонус дня</div>
-    <div class="daily-main">
-      <div>
-        <div class="daily-title">День ${daily.day}</div>
-        <div class="muted">Серия входов: ${current.dailyStreak} · награда: +${daily.reward} эссенции</div>
-      </div>
-      <button id="daily-claim-button" class="${available ? '' : 'secondary'}" ${available ? '' : 'disabled'}>
-        ${available ? 'Забрать бонус' : 'Уже получено'}
-      </button>
-    </div>
+    <div class="section-title small">Бонус дня</div>
+    <div class="daily-title">День ${daily.day}</div>
+    <p class="muted">Серия входов: ${current.dailyStreak} · награда: +${daily.reward} эссенции</p>
+    <div class="daily-track">${Array.from({ length: 7 }).map((_, index) => {
+      const dayNumber = index + 1;
+      const active = ((current.dailyDay - 1) % 7) + 1 === dayNumber;
+      return `<span class="daily-dot ${active ? 'active' : ''}">${dayNumber}</span>`;
+    }).join('')}</div>
+    <button id="daily-claim-button" class="${available ? 'gold-like' : 'secondary'}" ${available ? '' : 'disabled'}>
+      ${available ? 'Забрать бонус' : 'Уже получено'}
+    </button>
   `;
 
   card.querySelector<HTMLButtonElement>('#daily-claim-button')?.addEventListener('click', () => {
     const result = claimDailyReward();
     if (!result.ok) return;
-    showToast(`Дневной бонус: +${result.reward} эссенции`, 'success');
+    showToast(`Бонус дня ${result.day}: +${result.reward} эссенции`, 'success');
   });
 }
 
@@ -304,7 +353,7 @@ function renderOrder() {
     </div>
     <div class="order-progress ${progress.completed ? 'ready' : ''}">На столе: ${progress.have}/${progress.need}</div>
     <div class="formula-line">Формула: 2 ${previousItem.name} → ${item.name}</div>
-    <p class="muted">Катализатор: ур. ${current.catalystLevel} · множитель наград x${getCatalystMultiplier().toFixed(2)}</p>
+    <p class="muted">Катализатор: ур. ${current.catalystLevel} · множитель x${getCatalystMultiplier().toFixed(2)}</p>
   `;
 }
 
@@ -314,9 +363,7 @@ function renderSpecialContract() {
   if (!card) return;
 
   if (!current.specialContract) {
-    card.innerHTML = `
-      <div class="muted">Особые контракты откроются после 2 обычных заказов и 3+ открытий.</div>
-    `;
+    card.innerHTML = `<div class="muted">Особые контракты откроются после 2 обычных заказов и 3+ открытий.</div>`;
     return;
   }
 
@@ -337,7 +384,7 @@ function renderSpecialContract() {
     </div>
     <div class="order-progress ${progress.completed ? 'ready' : ''}">На столе: ${progress.have}/${progress.need}</div>
     <div class="formula-line">Формула: 2 ${previousItem.name} → ${item.name}</div>
-    <p class="muted">Особые контракты дают крупный reward spike и усиливают чувство достижения.</p>
+    <p class="muted">Особый контракт нужен для сильной эмоции достижения, а не для частого фарма.</p>
   `;
 }
 
@@ -366,13 +413,8 @@ function renderBoard() {
       return;
     }
 
-    if (selectedIndex === index) {
-      cell.classList.add('selected');
-    }
-
-    if (flashCellIndex === index) {
-      cell.classList.add('merge-flash');
-    }
+    if (selectedIndex === index) cell.classList.add('selected');
+    if (flashCellIndex === index) cell.classList.add('merge-flash');
 
     if (tier === null) {
       cell.classList.add('empty');
@@ -411,12 +453,13 @@ function renderBoard() {
       }
       renderAlchemyLab();
     });
+
     board.appendChild(cell);
   });
 
   hint.textContent = selectedIndex === null
     ? 'Тапни по двум одинаковым элементам, чтобы объединить их.'
-    : 'Элемент выбран. Тапни по такому же, чтобы сделать merge.';
+    : 'Элемент выбран. Тапни по такому же для merge.';
 }
 
 function renderJournal() {
@@ -460,7 +503,7 @@ function renderMissions() {
         <div class="mission-reward">+${mission.reward}</div>
       </div>
       <div class="mission-progress">${mission.progress}/${mission.target}</div>
-      <button class="mission-claim ${mission.completed && !mission.claimed ? '' : 'secondary'}" ${mission.completed && !mission.claimed ? '' : 'disabled'}>
+      <button class="mission-claim ${mission.completed && !mission.claimed ? 'gold-like' : 'secondary'}" ${mission.completed && !mission.claimed ? '' : 'disabled'}>
         ${mission.claimed ? 'Получено' : mission.completed ? 'Забрать' : 'Не готово'}
       </button>
     `;
@@ -485,9 +528,7 @@ function renderButtons() {
   if (fulfillButton) fulfillButton.disabled = !getOrderProgress().completed;
 
   const specialProgress = getSpecialContractProgress();
-  if (specialButton) {
-    specialButton.disabled = !specialProgress.active || !specialProgress.completed;
-  }
+  if (specialButton) specialButton.disabled = !specialProgress.active || !specialProgress.completed;
 
   const unlockCost = getUnlockNextCellCost();
   if (unlockButton) {
@@ -500,6 +541,13 @@ function renderButtons() {
     catalystButton.disabled = current.essence < catalystCost;
     catalystButton.textContent = `Усилить катализатор (${catalystCost})`;
   }
+}
+
+function renderInlineStats() {
+  const level = document.getElementById('lab-level-inline');
+  const rareChance = document.getElementById('rare-chance-inline');
+  if (level) level.textContent = String(getLabLevel(state.get()));
+  if (rareChance) rareChance.textContent = `${Math.round(getRareSpawnChance() * 100)}%`;
 }
 
 function renderToast() {
@@ -529,9 +577,7 @@ function applyFocusHints(focus: Array<'gather' | 'fulfill' | 'special' | 'unlock
 
   Object.values(map).forEach((element) => element?.classList.remove('tutorial-focus'));
   focus.forEach((key) => {
-    if (key in map) {
-      map[key as keyof typeof map]?.classList.add('tutorial-focus');
-    }
+    if (key in map) map[key as keyof typeof map]?.classList.add('tutorial-focus');
   });
 }
 
@@ -543,7 +589,7 @@ function createBoardSummary(cells: Array<number | null>): string {
   });
 
   if (counts.size === 0) {
-    return '<span class="summary-chip muted">Стол пуст — создай искру.</span>';
+    return '<span class="summary-chip muted">Стол пуст — призови искру.</span>';
   }
 
   return Array.from(counts.entries())
