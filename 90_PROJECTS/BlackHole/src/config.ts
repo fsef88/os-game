@@ -1,5 +1,5 @@
-export const VERSION = '0.6.0';
-export const BUILD = '2026-07-14-black-hole-v06';
+export const VERSION = '0.7.0';
+export const BUILD = '2026-07-14-black-hole-v07';
 
 export const ARENA_WIDTH = 1040;
 export const ARENA_HEIGHT = 620;
@@ -9,6 +9,8 @@ export const MAX_OBJECTS = 26;
 export const BOOST_DURATION_MS = 900;
 export const BOOST_COOLDOWN_MS = 4800;
 export const GRAVITY_STORM_DURATION_MS = 2200;
+export const STAR_SHOWER_DURATION_SEC = 7;
+export const STAR_SHOWER_INTERVAL_SEC = 36;
 
 export const SIZE_LEVELS = [
   { level: 1, minMass: 0, radius: 28 },

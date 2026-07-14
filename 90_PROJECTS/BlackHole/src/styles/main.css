@@ -208,3 +208,5 @@ body { min-height: 100vh; }
 
 .scene-card.gravity-storm { box-shadow: 0 0 0 2px rgba(127,214,255,.20), 0 0 48px rgba(127,214,255,.14), 0 20px 42px rgba(0,0,0,.26); }
 .tip-chip.hidden { display: none !important; }
+
+.scene-card.star-shower { box-shadow: 0 0 0 2px rgba(255,230,109,.16), 0 0 40px rgba(255,230,109,.12), 0 20px 42px rgba(0,0,0,.26); }

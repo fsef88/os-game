@@ -4,6 +4,8 @@ import {
   BOOST_COOLDOWN_MS,
   BOOST_DURATION_MS,
   GRAVITY_STORM_DURATION_MS,
+  STAR_SHOWER_DURATION_SEC,
+  STAR_SHOWER_INTERVAL_SEC,
   OBJECT_TYPES,
 } from '../config';
 import {
@@ -93,6 +95,7 @@ export function initBlackHoleGame(container: HTMLElement) {
         </div>
         <div id="combo-rush" class="tip-chip hidden">COMBO RUSH</div>
         <div id="storm-chip" class="tip-chip hidden">ГРАВИТАЦИОННЫЙ ШТОРМ</div>
+        <div id="star-chip" class="tip-chip hidden">ЗВЁЗДНЫЙ ДОЖДЬ</div>
         <div class="tip-chip">WASD / мышь / тач</div>
       </div>
     </div>
@@ -196,7 +199,9 @@ function loop(now: number) {
 
   const current = state.get();
   const movement = getMovementVector(current.holeX, current.holeY);
-  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil, Date.now() < gravityStormUntil);
+  const elapsedSec = Math.max(0, Math.floor((Date.now() - runStartedAt) / 1000));
+  const starShowerActive = elapsedSec > 0 && elapsedSec % STAR_SHOWER_INTERVAL_SEC >= STAR_SHOWER_INTERVAL_SEC - STAR_SHOWER_DURATION_SEC;
+  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil, Date.now() < gravityStormUntil, starShowerActive);
 
   if (result.absorbed.length > 0) {
     const latest = result.absorbed[result.absorbed.length - 1];
@@ -277,6 +282,7 @@ function renderScene() {
   const boostActive = now < boostActiveUntil;
   const gravityStormActive = now < gravityStormUntil;
   const elapsedSec = Math.max(0, Math.floor((now - runStartedAt) / 1000));
+  const starShowerActive = elapsedSec > 0 && elapsedSec % STAR_SHOWER_INTERVAL_SEC >= STAR_SHOWER_INTERVAL_SEC - STAR_SHOWER_DURATION_SEC;
 
   setText('hud-mass', String(Math.floor(current.mass)));
   setText('hud-score', String(Math.floor(current.score)));
@@ -290,7 +296,7 @@ function renderScene() {
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
   }
 
   const districtPanel = document.getElementById('district-panel');
@@ -305,8 +311,8 @@ function renderScene() {
       <div class="panel-label">Район</div>
       <div class="panel-title">${district.name}</div>
       <div class="panel-text">${district.goal}</div>
-      <div class="panel-subtext">Сильный ход: сначала собирай безопасные объекты, потом переходи на более крупные цели.</div>
-      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : gravityStormActive ? 'Шторм притяжения активен' : 'Район под контролем'}</div>
+      <div class="panel-subtext">Сильный ход: сначала собирай безопасные объекты, потом переходи на более крупные цели. Во время звёздного дождя охоться на бонусные звёзды.</div>
+      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : gravityStormActive ? 'Шторм притяжения активен' : starShowerActive ? 'Звёздный дождь идёт' : 'Район под контролем'}</div>
     `;
   }
 
@@ -331,6 +337,7 @@ function renderScene() {
   const boostButton = document.getElementById('boost-button') as HTMLButtonElement | null;
   const comboRush = document.getElementById('combo-rush');
   const stormChip = document.getElementById('storm-chip');
+  const starChip = document.getElementById('star-chip');
   if (boostFill) {
     const ratio = now < boostCooldownUntil
       ? 1 - Math.max(0, (boostCooldownUntil - now) / BOOST_COOLDOWN_MS)
@@ -351,6 +358,9 @@ function renderScene() {
   }
   if (stormChip) {
     stormChip.classList.toggle('hidden', !gravityStormActive);
+  }
+  if (starChip) {
+    starChip.classList.toggle('hidden', !starShowerActive);
   }
 
   const arena = document.getElementById('arena');

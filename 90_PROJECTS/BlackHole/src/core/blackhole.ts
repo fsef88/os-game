@@ -9,6 +9,7 @@ import {
   START_LIVES,
   TARGET_MASS_TO_WIN,
   type ObjectEffect,
+  type ObjectTypeId,
 } from '../config';
 import { track } from '../analytics';
 import { createInitialState, state, type GameObject, type GameState } from '../state';
@@ -75,7 +76,7 @@ export function getProgressToNextLevel(current = state.get()): { current: number
   return { current: current.mass, next: next.minMass, ratio: Math.max(0, Math.min(1, progress / range)) };
 }
 
-export function stepSimulation(dtMs: number, movementX: number, movementY: number, boostActive = false, gravityStormActive = false): {
+export function stepSimulation(dtMs: number, movementX: number, movementY: number, boostActive = false, gravityStormActive = false, starShowerActive = false): {
   absorbed: AbsorbEvent[];
   heavyHit?: HeavyHitEvent;
 } {
@@ -190,7 +191,7 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
         bonus,
       });
 
-      respawnObject(object, districtIndex, holeX, holeY);
+      respawnObject(object, districtIndex, holeX, holeY, starShowerActive);
       continue;
     }
 
@@ -258,9 +259,9 @@ function createInitialObjects(current: GameState): GameObject[] {
   return objects;
 }
 
-function createObject(districtIndex: number, holeX: number, holeY: number): GameObject {
+function createObject(districtIndex: number, holeX: number, holeY: number, forcedTypeId?: ObjectTypeId): GameObject {
   const pool = DISTRICT_POOLS[districtIndex] || DISTRICT_POOLS[0];
-  const typeId = pool[Math.floor(Math.random() * pool.length)];
+  const typeId = forcedTypeId ?? pool[Math.floor(Math.random() * pool.length)];
   const def = OBJECT_TYPES[typeId];
   let x = randomRange(def.radius, ARENA_WIDTH - def.radius);
   let y = randomRange(def.radius, ARENA_HEIGHT - def.radius);
@@ -294,8 +295,9 @@ function createObject(districtIndex: number, holeX: number, holeY: number): Game
   return { id: nextObjectId++, typeId, x, y, vx, vy };
 }
 
-function respawnObject(object: GameObject, districtIndex: number, holeX: number, holeY: number) {
-  Object.assign(object, createObject(districtIndex, holeX, holeY));
+function respawnObject(object: GameObject, districtIndex: number, holeX: number, holeY: number, starShowerActive = false) {
+  const forcedTypeId = starShowerActive && Math.random() < 0.45 ? 'star' : undefined;
+  Object.assign(object, createObject(districtIndex, holeX, holeY, forcedTypeId));
 }
 
 function getLevelByMass(mass: number): number {
