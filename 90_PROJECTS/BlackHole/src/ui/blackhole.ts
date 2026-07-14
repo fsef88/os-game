@@ -26,6 +26,8 @@ let boostActiveUntil = 0;
 let boostCooldownUntil = 0;
 let pulseSceneUntil = 0;
 let hitSceneUntil = 0;
+let districtBannerText = '';
+let districtBannerUntil = 0;
 
 export function initBlackHoleGame(container: HTMLElement) {
   if (mounted) return;
@@ -68,6 +70,8 @@ export function initBlackHoleGame(container: HTMLElement) {
       <div class="floating-panel right-panel" id="target-panel"></div>
 
       <div id="arena" class="arena" tabindex="0">
+        <div id="district-banner" class="district-banner hidden"></div>
+        <div id="boss-target" class="boss-target hidden"></div>
         <div id="hole-field" class="hole-field"></div>
         <div id="hole-core" class="hole-core"></div>
       </div>
@@ -193,6 +197,8 @@ function loop(now: number) {
       showToast('Победа! Автобус исчез в сингулярности.', 'success');
     } else if (latest.districtUp) {
       pulseSceneUntil = Date.now() + 700;
+      districtBannerText = latest.districtUp;
+      districtBannerUntil = Date.now() + 1400;
       showToast(`Новый район: ${latest.districtUp}`, 'success');
     } else if (latest.sizeUp) {
       pulseSceneUntil = Date.now() + 520;
@@ -352,6 +358,25 @@ function renderScene() {
     hint.textContent = boostActive
       ? 'Рывок активен — тяни объекты быстрее.'
       : 'Двигайся к мелким объектам и избегай слишком крупных.';
+  }
+
+  const banner = document.getElementById('district-banner');
+  if (banner) {
+    const visible = Date.now() < districtBannerUntil;
+    banner.classList.toggle('hidden', !visible);
+    banner.textContent = districtBannerText ? `РАЙОН: ${districtBannerText}` : '';
+  }
+
+  const bossTarget = document.getElementById('boss-target');
+  if (bossTarget) {
+    const busObject = current.objects.find((object) => object.typeId === 'bus');
+    const showBoss = Boolean(busObject);
+    bossTarget.classList.toggle('hidden', !showBoss);
+    if (busObject) {
+      bossTarget.style.left = `${busObject.x - 48}px`;
+      bossTarget.style.top = `${Math.max(12, busObject.y - 74)}px`;
+      bossTarget.textContent = current.sizeLevel >= 5 ? 'Цель: автобус' : 'Пока слишком большой';
+    }
   }
 
   arena.querySelectorAll('.object-node').forEach((node) => node.remove());

@@ -262,11 +262,29 @@ function createObject(districtIndex: number, holeX: number, holeY: number): Game
   const def = OBJECT_TYPES[typeId];
   let x = randomRange(def.radius, ARENA_WIDTH - def.radius);
   let y = randomRange(def.radius, ARENA_HEIGHT - def.radius);
+  let vx = randomRange(-28, 28);
+  let vy = randomRange(-28, 28);
+
+  if (typeId === 'car' || typeId === 'taxi' || typeId === 'bus') {
+    const lanes = [220, 365, 510];
+    y = lanes[Math.floor(Math.random() * lanes.length)];
+    x = Math.random() < 0.5 ? def.radius + 10 : ARENA_WIDTH - def.radius - 10;
+    vx = x < ARENA_WIDTH / 2 ? randomRange(62, 108) : randomRange(-108, -62);
+    vy = randomRange(-8, 8);
+  } else if (typeId === 'scooter') {
+    vx = randomRange(-46, 46);
+    vy = randomRange(-46, 46);
+  } else if (typeId === 'star' || typeId === 'heart' || typeId === 'core') {
+    vx = randomRange(-18, 18);
+    vy = randomRange(-18, 18);
+  }
+
   while (distanceBetween(x, y, holeX, holeY) < 180) {
     x = randomRange(def.radius, ARENA_WIDTH - def.radius);
     y = randomRange(def.radius, ARENA_HEIGHT - def.radius);
   }
-  return { id: nextObjectId++, typeId, x, y, vx: randomRange(-28, 28), vy: randomRange(-28, 28) };
+
+  return { id: nextObjectId++, typeId, x, y, vx, vy };
 }
 
 function respawnObject(object: GameObject, districtIndex: number, holeX: number, holeY: number) {

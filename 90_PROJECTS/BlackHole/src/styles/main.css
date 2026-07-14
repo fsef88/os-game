@@ -90,6 +90,19 @@ body { min-height: 100vh; }
 .target-bar { height: 12px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; margin-bottom: 10px; }
 .target-bar-fill { height: 100%; background: linear-gradient(90deg,#7fd6ff 0%, #f6cf74 100%); }
 
+
+.district-banner {
+  position: absolute; left: 50%; top: 78px; transform: translateX(-50%); z-index: 4;
+  padding: 10px 16px; border-radius: 999px; background: rgba(16,19,39,.86);
+  border: 1px solid rgba(255,255,255,.08); color: #f6cf74; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
+}
+.boss-target {
+  position: absolute; z-index: 4; padding: 8px 12px; border-radius: 999px;
+  background: rgba(16,19,39,.84); border: 1px solid rgba(255,255,255,.08);
+  color: #4dabf7; font-weight: 800; font-size: 13px;
+}
+.hidden { display: none !important; }
+
 .hole-field {
   position: absolute; border-radius: 999px; background: radial-gradient(circle, rgba(127,214,255,.28) 0%, rgba(127,214,255,.10) 46%, rgba(127,214,255,0) 72%); pointer-events: none;
 }
