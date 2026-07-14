@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Чёрная дыра</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; font-family: system-ui, sans-serif; background: radial-gradient(circle at top, rgba(64,99,255,.22), transparent 32%), linear-gradient(180deg, #0b1024 0%, #151d40 100%); color: #fff; }
+    body { padding: 16px; }
+    .wrap { max-width: 1220px; margin: 0 auto; }
+    .hero, .hud, .goal, .bottom, .overlay-card {
+      background: rgba(20,24,48,.86); border: 1px solid rgba(255,255,255,.08); border-radius: 22px; box-shadow: 0 18px 36px rgba(0,0,0,.24);
+    }
+    .hero { padding: 20px; display: flex; justify-content: space-between; gap: 12px; align-items: end; }
+    .eyebrow { color:#f6cf74; font-size:12px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+    h1 { font-size: 40px; margin-bottom: 10px; }
+    .subtitle { max-width: 740px; opacity: .88; line-height: 1.5; }
+    .restart { border: 0; border-radius: 14px; min-height: 48px; padding: 12px 18px; font-size: 16px; font-weight: 800; cursor: pointer; color:#fff; background: rgba(255,255,255,.12); }
+    .hud { margin-top: 14px; padding: 12px; display:grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+    .pill, .card { padding: 14px 16px; background: rgba(255,255,255,.05); border-radius: 16px; font-weight: 800; }
+    .goal { margin-top: 14px; padding: 16px 18px; }
+    .goal-top { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .goal-tag { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#f6cf74; }
+    .goal-main { font-size: 28px; font-weight: 900; line-height: 1.25; margin: 10px 0; }
+    .goal-bar { height: 12px; border-radius: 999px; background: rgba(255,255,255,.08); overflow:hidden; }
+    .goal-fill { height:100%; width:0%; background: linear-gradient(90deg,#7fd6ff 0%, #f6cf74 100%); }
+    .arena-shell { position: relative; margin-top: 14px; background: rgba(15,20,44,.96); border:1px solid rgba(255,255,255,.08); border-radius: 30px; padding: 16px; min-height: 670px; overflow:hidden; }
+    .city-block { position:absolute; border-radius: 22px; background: rgba(255,255,255,.05); }
+    .block-a { left: 110px; top: 120px; width: 220px; height: 140px; }
+    .block-b { right: 140px; top: 170px; width: 260px; height: 150px; }
+    .block-c { left: 250px; bottom: 120px; width: 180px; height: 170px; }
+    .road { position:absolute; background: rgba(255,255,255,.04); }
+    .road-h { left:0; right:0; top:320px; height:90px; }
+    .road-v { top:0; bottom:0; left:520px; width:88px; }
+    .arena { position: relative; width: 1040px; height: 620px; margin: 0 auto; border-radius: 26px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.12)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); overflow:hidden; }
+    .field { position:absolute; border-radius:999px; background: radial-gradient(circle, rgba(127,214,255,.24) 0%, rgba(127,214,255,.08) 46%, rgba(127,214,255,0) 70%); pointer-events:none; }
+    .hole { position:absolute; border-radius:999px; background: radial-gradient(circle at 50% 50%, #0c0c0f 0%, #000 56%, #263066 100%); box-shadow: 0 0 0 6px rgba(127,214,255,.15), 0 0 36px rgba(127,214,255,.25); }
+    .object { position:absolute; border-radius:999px; display:grid; place-items:center; background: radial-gradient(circle at top, var(--accent, rgba(255,255,255,.4)) 0%, transparent 70%), rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 10px 24px rgba(0,0,0,.18); }
+    .object.safe { outline: 2px solid rgba(141,229,125,.18); }
+    .object.danger { outline: 2px solid rgba(255,102,117,.18); }
+    .emoji { font-size: 28px; }
+    .toast-layer { position: sticky; top: 12px; z-index: 60; display:flex; justify-content:center; min-height:0; pointer-events:none; }
+    .toast { padding: 10px 16px; border-radius: 999px; font-weight: 800; box-shadow: 0 16px 28px rgba(0,0,0,.28); }
+    .toast.info { background: rgba(127,214,255,.18); border: 1px solid rgba(127,214,255,.42); }
+    .toast.success { background: rgba(141,229,125,.16); border: 1px solid rgba(141,229,125,.38); }
+    .toast.danger { background: rgba(255,102,117,.16); border: 1px solid rgba(255,102,117,.38); }
+    .bottom { margin-top:14px; padding: 12px; display:grid; grid-template-columns: repeat(3,1fr); gap:10px; }
+    .title { color:#f6cf74; text-transform:uppercase; letter-spacing:.08em; font-size:12px; margin-bottom: 6px; }
+    .overlay { position: fixed; inset: 0; display:none; z-index: 100; }
+    .overlay.show { display:block; }
+    .overlay-bg { position:absolute; inset:0; background: rgba(5,8,18,.74); }
+    .overlay-card { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(540px, calc(100vw - 24px)); padding:20px; display:grid; gap:14px; }
+    .overlay-title { font-size: 34px; font-weight: 900; }
+    .overlay-stats { display:grid; gap:8px; font-size:20px; }
+    .big { background: linear-gradient(180deg,#f5c76c 0%, #e5a94b 100%); color:#1f1600; }
+    @media (max-width: 1120px) { .arena { width:100%; height:540px; } .hud { grid-template-columns: repeat(2,1fr);} .bottom {grid-template-columns:1fr;} }
+    @media (max-width: 720px) { .hero { display:grid; } .hud { grid-template-columns:1fr; } .goal-main { font-size:24px; } .arena { height:460px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="toastLayer" class="toast-layer"></div>
+
+    <div class="hero">
+      <div>
+        <div class="eyebrow">toy-first arcade prototype</div>
+        <h1>Чёрная дыра</h1>
+        <div class="subtitle">Веди дыру по району, засасывай всё, что меньше тебя, раскручивай комбо и дорасти до автобуса.</div>
+      </div>
+      <button id="restartBtn" class="restart">Новый ран</button>
+    </div>
+
+    <div class="hud">
+      <div class="pill">⚫ Масса: <strong id="mass">0</strong></div>
+      <div class="pill">🔥 Комбо: <strong id="combo">0</strong></div>
+      <div class="pill">🗺 Район: <strong id="district">Двор</strong></div>
+      <div class="pill">❤ Жизни: <strong id="lives">3</strong></div>
+    </div>
+
+    <div class="goal">
+      <div class="goal-top"><span class="goal-tag">Текущая цель</span><span id="goalProgress"></span></div>
+      <div id="goalMain" class="goal-main"></div>
+      <div class="goal-bar"><div id="goalFill" class="goal-fill"></div></div>
+    </div>
+
+    <div class="arena-shell">
+      <div class="city-block block-a"></div>
+      <div class="city-block block-b"></div>
+      <div class="city-block block-c"></div>
+      <div class="road road-h"></div>
+      <div class="road road-v"></div>
+      <div id="arena" class="arena">
+        <div id="field" class="field"></div>
+        <div id="hole" class="hole"></div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="card"><div class="title">Как играть</div>Води мышью, пальцем или WASD. Всасывай всё, что меньше тебя. Слишком крупные объекты отнимают жизнь.</div>
+      <div class="card"><div class="title">Рекорд</div>Лучшая масса: <strong id="bestMass">0</strong> · Лучшее комбо: <strong id="bestCombo">0</strong></div>
+      <div class="card"><div class="title">Финал</div>Когда станешь достаточно большим — проглоти автобус и закрой ран победой.</div>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="overlay-bg"></div>
+    <div class="overlay-card">
+      <div id="overlayTitle" class="overlay-title"></div>
+      <p id="overlayText"></p>
+      <div id="overlayStats" class="overlay-stats"></div>
+      <button id="overlayRestart" class="restart big">Играть ещё</button>
+    </div>
+  </div>
+
+  <script>
+    const OBJECT_TYPES = {
+      coin: { id:'coin', label:'Монета', emoji:'🪙', tier:1, radius:16, value:2, color:'#ffd166' },
+      crate:{ id:'crate', label:'Коробка', emoji:'📦', tier:1, radius:20, value:4, color:'#f0b36b' },
+      cone: { id:'cone', label:'Конус', emoji:'🚧', tier:2, radius:20, value:5, color:'#ff9f43' },
+      scooter:{ id:'scooter', label:'Скутер', emoji:'🛴', tier:2, radius:24, value:8, color:'#7bdff2' },
+      car: { id:'car', label:'Авто', emoji:'🚗', tier:3, radius:34, value:16, color:'#ff6b6b' },
+      taxi:{ id:'taxi', label:'Такси', emoji:'🚕', tier:4, radius:42, value:24, color:'#ffe066' },
+      bus: { id:'bus', label:'Автобус', emoji:'🚌', tier:5, radius:54, value:40, color:'#4dabf7' }
+    };
+    const SIZE_LEVELS = [
+      { level:1, minMass:0, radius:28 },
+      { level:2, minMass:20, radius:36 },
+      { level:3, minMass:55, radius:46 },
+      { level:4, minMass:110, radius:58 },
+      { level:5, minMass:190, radius:72 }
+    ];
+    const DISTRICTS = [
+      { id:0, name:'Двор', minMass:0 },
+      { id:1, name:'Парковка', minMass:45 },
+      { id:2, name:'Проспект', minMass:120 }
+    ];
+    const DISTRICT_POOLS = {
+      0:['coin','coin','crate','crate','cone','scooter'],
+      1:['coin','crate','cone','scooter','scooter','car'],
+      2:['crate','cone','scooter','car','taxi','bus']
+    };
+    const ARENA_WIDTH = 1040;
+    const ARENA_HEIGHT = 620;
+    const MAX_OBJECTS = 24;
+    const TARGET_MASS_TO_WIN = 220;
+    const START_LIVES = 3;
+    const KEY = 'black_hole_standalone_v1';
+
+    let nextObjectId = 1;
+    let pointer = { active:false, x:ARENA_WIDTH/2, y:ARENA_HEIGHT/2 };
+    let keyboard = { up:false, down:false, left:false, right:false };
+    let lastFrame = performance.now();
+    let toastTimer = null;
+    let toast = null;
+
+    function createInitialState() {
+      const state = {
+        mass: 0,
+        bestMass: 0,
+        sizeLevel: 1,
+        holeX: ARENA_WIDTH/2,
+        holeY: ARENA_HEIGHT/2,
+        objects: [],
+        combo: 0,
+        bestCombo: 0,
+        lastAbsorbAt: 0,
+        districtIndex: 0,
+        absorbedCount: 0,
+        lives: START_LIVES,
+        gameOver: false,
+        victory: false,
+        lastHeavyHitAt: 0
+      };
+      state.objects = createInitialObjects(state);
+      return state;
+    }
+
+    function load() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : createInitialState(); } catch { return createInitialState(); } }
+    const state = load();
+    if (!state.objects || !state.objects.length) Object.assign(state, createInitialState());
+    function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+    function createInitialObjects(stateLike) {
+      const objects = [];
+      for (let i=0;i<MAX_OBJECTS;i++) objects.push(createObject(stateLike.districtIndex, stateLike.holeX, stateLike.holeY));
+      return objects;
+    }
+    function createObject(districtIndex, holeX, holeY) {
+      const pool = DISTRICT_POOLS[districtIndex] || DISTRICT_POOLS[0];
+      const typeId = pool[Math.floor(Math.random()*pool.length)];
+      const def = OBJECT_TYPES[typeId];
+      let x = randomRange(def.radius, ARENA_WIDTH-def.radius);
+      let y = randomRange(def.radius, ARENA_HEIGHT-def.radius);
+      while (distance(x,y,holeX,holeY) < 180) {
+        x = randomRange(def.radius, ARENA_WIDTH-def.radius);
+        y = randomRange(def.radius, ARENA_HEIGHT-def.radius);
+      }
+      return { id: nextObjectId++, typeId, x, y, vx: randomRange(-28,28), vy: randomRange(-28,28) };
+    }
+    function respawnObject(object) {
+      const r = createObject(state.districtIndex, state.holeX, state.holeY);
+      Object.assign(object, r);
+    }
+    function holeRadius() { let r = SIZE_LEVELS[0].radius; for (const entry of SIZE_LEVELS) if (state.mass >= entry.minMass) r = entry.radius; return r; }
+    function levelByMass(m) { let level = 1; for (const entry of SIZE_LEVELS) if (m >= entry.minMass) level = entry.level; return level; }
+    function districtByMass(m) { let d = 0; for (const entry of DISTRICTS) if (m >= entry.minMass) d = entry.id; return d; }
+    function districtName() { return DISTRICTS[state.districtIndex].name; }
+    function goalText() {
+      if (state.victory) return 'Автобус проглочен — район под контролем';
+      if (state.sizeLevel < 2) return 'Ешь монеты и коробки, чтобы вырасти';
+      if (state.sizeLevel < 3) return 'Теперь можно охотиться на конусы и скутеры';
+      if (state.sizeLevel < 4) return 'Пора переходить на автомобили';
+      if (state.sizeLevel < 5) return 'Ты уже опасен даже для крупных машин';
+      return 'Финальная цель — съешь автобус';
+    }
+    function progressToNext() {
+      const current = SIZE_LEVELS.find(s => s.level === state.sizeLevel) || SIZE_LEVELS[0];
+      const next = SIZE_LEVELS.find(s => s.level === state.sizeLevel + 1);
+      if (!next) return { current: state.mass, next: null, ratio: 1 };
+      const ratio = Math.max(0, Math.min(1, (state.mass - current.minMass) / (next.minMass - current.minMass)));
+      return { current: state.mass, next: next.minMass, ratio };
+    }
+    function showToast(text, tone) {
+      toast = { text, tone };
+      renderToast();
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast = null; renderToast(); }, 1400);
+    }
+    function renderToast() { document.getElementById('toastLayer').innerHTML = toast ? `<div class="toast ${toast.tone}">${toast.text}</div>` : ''; }
+
+    const arena = document.getElementById('arena');
+    arena.addEventListener('pointerdown', (e) => { pointer.active = true; updatePointer(e.clientX, e.clientY); });
+    arena.addEventListener('pointermove', (e) => { if (pointer.active || e.pointerType === 'mouse') updatePointer(e.clientX, e.clientY); });
+    window.addEventListener('pointerup', () => { pointer.active = false; });
+    function updatePointer(clientX, clientY) {
+      const rect = arena.getBoundingClientRect();
+      pointer.x = ((clientX - rect.left) / rect.width) * ARENA_WIDTH;
+      pointer.y = ((clientY - rect.top) / rect.height) * ARENA_HEIGHT;
+    }
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keyboard.up = true;
+      if (e.key === 's' || e.key === 'ArrowDown') keyboard.down = true;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keyboard.left = true;
+      if (e.key === 'd' || e.key === 'ArrowRight') keyboard.right = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'w' || e.key === 'ArrowUp') keyboard.up = false;
+      if (e.key === 's' || e.key === 'ArrowDown') keyboard.down = false;
+      if (e.key === 'a' || e.key === 'ArrowLeft') keyboard.left = false;
+      if (e.key === 'd' || e.key === 'ArrowRight') keyboard.right = false;
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', restart);
+    document.getElementById('overlayRestart').addEventListener('click', restart);
+    function restart() {
+      Object.assign(state, createInitialState());
+      save();
+      showToast('Новый ран начался.', 'info');
+      render();
+    }
+
+    function loop(now) {
+      const dtMs = Math.min(40, now - lastFrame);
+      lastFrame = now;
+      step(dtMs);
+      requestAnimationFrame(loop);
+    }
+
+    function step(dtMs) {
+      if (state.gameOver || state.victory) { render(); return; }
+      const dt = dtMs / 1000;
+      const radius = holeRadius();
+      let moveX = 0, moveY = 0;
+      if (pointer.active) {
+        const dx = pointer.x - state.holeX; const dy = pointer.y - state.holeY; const len = Math.hypot(dx,dy);
+        if (len > 4) { moveX += dx / len; moveY += dy / len; }
+      }
+      if (keyboard.left) moveX -= 1; if (keyboard.right) moveX += 1; if (keyboard.up) moveY -= 1; if (keyboard.down) moveY += 1;
+      const len = Math.hypot(moveX, moveY);
+      if (len > 0) { moveX /= len; moveY /= len; }
+      const speed = Math.max(120, 260 - radius * 1.2);
+      state.holeX = clamp(state.holeX + moveX * speed * dt, radius, ARENA_WIDTH - radius);
+      state.holeY = clamp(state.holeY + moveY * speed * dt, radius, ARENA_HEIGHT - radius);
+
+      if (Date.now() - state.lastAbsorbAt > 1500) state.combo = 0;
+
+      for (const object of state.objects) {
+        const def = OBJECT_TYPES[object.typeId];
+        object.x += object.vx * dt; object.y += object.vy * dt;
+        if (object.x < def.radius || object.x > ARENA_WIDTH - def.radius) object.vx *= -1;
+        if (object.y < def.radius || object.y > ARENA_HEIGHT - def.radius) object.vy *= -1;
+        object.x = clamp(object.x, def.radius, ARENA_WIDTH - def.radius);
+        object.y = clamp(object.y, def.radius, ARENA_HEIGHT - def.radius);
+
+        const dx = state.holeX - object.x;
+        const dy = state.holeY - object.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        const absorbable = def.tier <= state.sizeLevel;
+
+        if (absorbable && dist < radius + 86) {
+          const pull = (radius + 86 - dist) * 2.2 * dt;
+          object.x += (dx / dist) * pull * 22;
+          object.y += (dy / dist) * pull * 22;
+        }
+
+        if (absorbable && dist < radius * .42 + def.radius * .52) {
+          const now = Date.now();
+          state.combo = now - state.lastAbsorbAt < 1500 ? state.combo + 1 : 1;
+          state.lastAbsorbAt = now;
+          state.bestCombo = Math.max(state.bestCombo, state.combo);
+          const gained = def.value + Math.max(0, state.combo - 1);
+          state.mass += gained;
+          state.absorbedCount += 1;
+          state.bestMass = Math.max(state.bestMass, state.mass);
+
+          const prevLevel = state.sizeLevel;
+          const prevDistrict = state.districtIndex;
+          state.sizeLevel = levelByMass(state.mass);
+          state.districtIndex = districtByMass(state.mass);
+          if (def.id === 'bus' && state.mass >= TARGET_MASS_TO_WIN) state.victory = true;
+          if (state.victory) showToast('Победа! Автобус исчез в сингулярности.', 'success');
+          else if (state.districtIndex > prevDistrict) showToast(`Новый район: ${districtName()}`, 'success');
+          else if (state.sizeLevel > prevLevel) showToast(`Рост! Размер ${state.sizeLevel}`, 'success');
+          else if (state.combo >= 3) showToast(`Комбо x${state.combo}`, 'info');
+
+          respawnObject(object);
+        } else if (!absorbable && dist < radius + def.radius * .55) {
+          object.x -= (dx / dist) * 14 * dt;
+          object.y -= (dy / dist) * 14 * dt;
+          if (Date.now() - state.lastHeavyHitAt > 1000) {
+            state.lives -= 1;
+            state.combo = 0;
+            state.lastHeavyHitAt = Date.now();
+            if (state.lives <= 0) {
+              state.gameOver = true;
+              showToast('Слишком тяжело. Ран окончен.', 'danger');
+            } else {
+              showToast(`Слишком тяжело: ${def.label}`, 'danger');
+            }
+          }
+        }
+      }
+      save();
+      render();
+    }
+
+    function render() {
+      document.getElementById('mass').textContent = Math.floor(state.mass);
+      document.getElementById('combo').textContent = state.combo;
+      document.getElementById('district').textContent = districtName();
+      document.getElementById('lives').textContent = state.lives;
+      document.getElementById('bestMass').textContent = Math.floor(state.bestMass);
+      document.getElementById('bestCombo').textContent = state.bestCombo;
+      document.getElementById('goalMain').textContent = goalText();
+      const p = progressToNext();
+      document.getElementById('goalProgress').textContent = p.next ? `${Math.floor(p.current)}/${p.next}` : 'цель достигнута';
+      document.getElementById('goalFill').style.width = `${p.ratio * 100}%`;
+
+      const radius = holeRadius();
+      const field = document.getElementById('field');
+      field.style.width = `${radius * 4.2}px`;
+      field.style.height = `${radius * 4.2}px`;
+      field.style.left = `${state.holeX - radius * 2.1}px`;
+      field.style.top = `${state.holeY - radius * 2.1}px`;
+      const hole = document.getElementById('hole');
+      hole.style.width = `${radius * 2}px`;
+      hole.style.height = `${radius * 2}px`;
+      hole.style.left = `${state.holeX - radius}px`;
+      hole.style.top = `${state.holeY - radius}px`;
+
+      document.querySelectorAll('.object').forEach(node => node.remove());
+      for (const object of state.objects) {
+        const def = OBJECT_TYPES[object.typeId];
+        const node = document.createElement('div');
+        node.className = `object ${def.tier <= state.sizeLevel ? 'safe' : 'danger'}`;
+        node.style.width = `${def.radius * 2}px`;
+        node.style.height = `${def.radius * 2}px`;
+        node.style.left = `${object.x - def.radius}px`;
+        node.style.top = `${object.y - def.radius}px`;
+        node.style.setProperty('--accent', def.color + '55');
+        node.innerHTML = `<span class="emoji">${def.emoji}</span>`;
+        arena.appendChild(node);
+      }
+
+      document.getElementById('overlayTitle').textContent = state.victory ? 'Район поглощён' : 'Чёрная дыра схлопнулась';
+      document.getElementById('overlayText').textContent = state.victory ? 'Ты вырос до размеров автобуса и поглотил главную цель.' : 'Слишком тяжёлые объекты трижды пробили твою стабильность.';
+      document.getElementById('overlayStats').innerHTML = `<span>Масса: <strong>${Math.floor(state.mass)}</strong></span><span>Лучшее комбо: <strong>${state.bestCombo}</strong></span><span>Поглощено: <strong>${state.absorbedCount}</strong></span>`;
+      document.getElementById('overlay').classList.toggle('show', state.gameOver || state.victory);
+
+      renderToast();
+    }
+
+    function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+    function randomRange(min, max) { return Math.random() * (max - min) + min; }
+    function distance(ax, ay, bx, by) { const dx = ax - bx; const dy = ay - by; return Math.sqrt(dx*dx + dy*dy); }
+
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

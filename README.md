@@ -93,7 +93,8 @@
 - `MISSING.md` — реальные пробелы
 - `GENRE_STRATEGY.md` — стратегический фокус по жанрам
 - `PILOT_CANDIDATES.md` — shortlist перспективных пилотов
-- `90_PROJECTS/AlchemyLab/` — текущий активный тематический пилот
+- `90_PROJECTS/BlackHole/` — текущий активный toy-first пилот
+- `90_PROJECTS/AlchemyLab/` — предыдущий тематический эксперимент
 - `90_PROJECTS/SeedClickerMini/` — технический smoke-test template
 
 ## Главный принцип

@@ -25,7 +25,8 @@ Genre → Mechanics → Systems → Components → Project
 - `PROJECT_STATE.md` — актуальное состояние
 - `GENRE_STRATEGY.md` — куда двигаться по жанрам
 - `PILOT_CANDIDATES.md` — shortlist перспективных пилотов
-- `90_PROJECTS/AlchemyLab/README.md` — активный тематический пилот
+- `90_PROJECTS/BlackHole/README.md` — активный toy-first пилот
+- `90_PROJECTS/AlchemyLab/README.md` — предыдущий тематический пилот
 
 ## 2. Границы и философия
 
@@ -156,7 +157,8 @@ Genre → Mechanics → Systems → Components → Project
 - `90_PROJECTS/README.md`
 - `90_PROJECTS/TEMPLATE/README.md`
 - `90_PROJECTS/TEMPLATE/src/README.md`
-- `90_PROJECTS/AlchemyLab/README.md` — активный тематический пилот
+- `90_PROJECTS/BlackHole/README.md` — активный toy-first пилот
+- `90_PROJECTS/AlchemyLab/README.md` — предыдущий тематический пилот
 - `90_PROJECTS/SeedClickerMini/README.md` — технический пилот
 - `98_EXAMPLES/AlchemyLab/README.md`
 - `98_EXAMPLES/SeedClickerMini/README.md`

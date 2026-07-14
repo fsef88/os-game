@@ -1,41 +1,35 @@
 # NEXT_TASK
 
-**Sprint:** 5 — Alchemy Lab pilot  
-**Task ID:** PT-004  
+**Sprint:** 6 — Black Hole pilot  
+**Task ID:** PT-005  
 **Owner:** Producer + Architect + Game Designer + Programmer
 
 ## Задача
 
-Развить `Alchemy Lab` как первый **тематический и продуктово интересный** пилот Studio OS.
+Развить `Black Hole` как новый активный toy-first пилот Studio OS.
+
+## Почему выбран новый вектор
+
+`Alchemy Lab` доказал важную вещь: даже хороший набор систем не гарантирует, что экран будет ощущаться как игра.
+
+Поэтому текущий фокус смещён на жанровый каркас, который:
+- считывается мгновенно;
+- имеет один сильный toy;
+- не выглядит как интерфейс / таблица / dashboard;
+- хорошо работает на browser + mobile.
 
 ## Что уже сделано
 
-- Studio OS стабилизирована;
-- template проходит `typecheck` и `build`;
-- `SeedClickerMini` подтвердил техническую жизнеспособность шаблона;
-- выбран и поднят новый тематический пилот `90_PROJECTS/AlchemyLab/`;
-- сделан первый playable prototype и standalone HTML-версия.
+- создан `90_PROJECTS/BlackHole/`;
+- поднят standalone playable prototype;
+- реализованы движение, всасывание, рост, комбо и смена районов;
+- добавлены победа и проигрыш;
+- игра уже проходит typecheck / build.
 
-## Почему именно Alchemy Lab
+## Следующий шаг
 
-- merge остаётся понятным casual-loop;
-- discovery делает проект интереснее обычного merge/clicker;
-- orders и journal создают retention-потенциал;
-- тема хорошо подходит под mobile-first и solo + AI production.
-
-## Ближайший план
-
-1. Доработать `Alchemy Lab` как основной демонстрационный пилот
-2. Усилить visual feedback merge и discoveries
-3. Добавить больше order variety
-4. При необходимости сделать v0.2 с rare ingredients / daily orders
-5. Использовать опыт пилота для чистки Studio OS
-
-## Definition of Done
-
-- [x] создан новый тематический пилот
-- [x] playable prototype существует
-- [x] standalone HTML существует
-- [x] docs проекта заполнены
-- [ ] сделана более polished версия v0.2
-- [ ] добавлен расширенный case study
+Сделать `Black Hole v0.2`:
+- добавить больше juice и impact;
+- усилить окружение и ощущение района;
+- добавить 1–2 типа special objects;
+- отполировать touch feel и game-over/victory screens.
