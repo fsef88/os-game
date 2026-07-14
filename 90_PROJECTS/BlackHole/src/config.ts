@@ -1,5 +1,5 @@
-export const VERSION = '0.5.0';
-export const BUILD = '2026-07-14-black-hole-v05';
+export const VERSION = '0.6.0';
+export const BUILD = '2026-07-14-black-hole-v06';
 
 export const ARENA_WIDTH = 1040;
 export const ARENA_HEIGHT = 620;
@@ -8,6 +8,7 @@ export const TARGET_MASS_TO_WIN = 220;
 export const MAX_OBJECTS = 26;
 export const BOOST_DURATION_MS = 900;
 export const BOOST_COOLDOWN_MS = 4800;
+export const GRAVITY_STORM_DURATION_MS = 2200;
 
 export const SIZE_LEVELS = [
   { level: 1, minMass: 0, radius: 28 },
@@ -34,6 +35,7 @@ export const OBJECT_TYPES = {
   car: { id: 'car', label: 'Авто', emoji: '🚗', tier: 3, radius: 34, value: 16, color: '#ff6b6b', effect: 'none' },
   taxi: { id: 'taxi', label: 'Такси', emoji: '🚕', tier: 4, radius: 42, value: 24, color: '#ffe066', effect: 'none' },
   bus: { id: 'bus', label: 'Автобус', emoji: '🚌', tier: 5, radius: 54, value: 40, color: '#4dabf7', effect: 'none' },
+  police: { id: 'police', label: 'Полиция', emoji: '🚓', tier: 99, radius: 40, value: 0, color: '#6fa8ff', effect: 'hazard' },
 } as const;
 
 export type ObjectTypeId = keyof typeof OBJECT_TYPES;
@@ -42,5 +44,5 @@ export type ObjectEffect = (typeof OBJECT_TYPES)[ObjectTypeId]['effect'];
 export const DISTRICT_POOLS: Record<number, ObjectTypeId[]> = {
   0: ['coin', 'coin', 'crate', 'crate', 'star', 'cone', 'scooter', 'heart'],
   1: ['coin', 'crate', 'star', 'cone', 'scooter', 'scooter', 'car', 'core', 'heart'],
-  2: ['crate', 'star', 'cone', 'scooter', 'car', 'taxi', 'bus', 'core'],
+  2: ['crate', 'star', 'cone', 'scooter', 'car', 'taxi', 'bus', 'core', 'police'],
 };

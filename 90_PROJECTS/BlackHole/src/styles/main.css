@@ -205,3 +205,6 @@ body { min-height: 100vh; }
 .status-line.danger-line { background: rgba(255,102,117,.12); color: #ff9da8; }
 .scene-card.combo-rush .legend-row { box-shadow: 0 0 0 1px rgba(245,199,108,.10); }
 .boss-target.ready { color: #f6cf74; box-shadow: 0 0 18px rgba(246,207,116,.18); }
+
+.scene-card.gravity-storm { box-shadow: 0 0 0 2px rgba(127,214,255,.20), 0 0 48px rgba(127,214,255,.14), 0 20px 42px rgba(0,0,0,.26); }
+.tip-chip.hidden { display: none !important; }

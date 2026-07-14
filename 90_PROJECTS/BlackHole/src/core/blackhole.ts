@@ -75,7 +75,7 @@ export function getProgressToNextLevel(current = state.get()): { current: number
   return { current: current.mass, next: next.minMass, ratio: Math.max(0, Math.min(1, progress / range)) };
 }
 
-export function stepSimulation(dtMs: number, movementX: number, movementY: number, boostActive = false): {
+export function stepSimulation(dtMs: number, movementX: number, movementY: number, boostActive = false, gravityStormActive = false): {
   absorbed: AbsorbEvent[];
   heavyHit?: HeavyHitEvent;
 } {
@@ -84,7 +84,8 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
 
   const dt = dtMs / 1000;
   const holeRadius = getHoleRadius(current);
-  const effectiveRadius = boostActive ? holeRadius * 1.28 : holeRadius;
+  const radiusMultiplier = boostActive ? 1.28 : gravityStormActive ? 1.12 : 1;
+  const effectiveRadius = holeRadius * radiusMultiplier;
   const speed = Math.max(120, 260 - holeRadius * 1.2) * (boostActive ? 1.22 : 1);
   const holeX = clamp(current.holeX + movementX * speed * dt, holeRadius, ARENA_WIDTH - holeRadius);
   const holeY = clamp(current.holeY + movementY * speed * dt, holeRadius, ARENA_HEIGHT - holeRadius);
@@ -124,7 +125,8 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
     const absorbable = def.tier <= sizeLevel;
 
     if (absorbable && distance < effectiveRadius + 86) {
-      const pull = (effectiveRadius + 86 - distance) * (boostActive ? 3 : 2.2) * dt;
+      const pullPower = boostActive ? 3 : gravityStormActive ? 2.8 : 2.2;
+      const pull = (effectiveRadius + 86 - distance) * pullPower * dt;
       object.x += (dx / distance) * pull * 22;
       object.y += (dy / distance) * pull * 22;
     }
@@ -265,12 +267,17 @@ function createObject(districtIndex: number, holeX: number, holeY: number): Game
   let vx = randomRange(-28, 28);
   let vy = randomRange(-28, 28);
 
-  if (typeId === 'car' || typeId === 'taxi' || typeId === 'bus') {
+  if (typeId === 'car' || typeId === 'taxi' || typeId === 'bus' || typeId === 'police') {
     const lanes = [220, 365, 510];
     y = lanes[Math.floor(Math.random() * lanes.length)];
     x = Math.random() < 0.5 ? def.radius + 10 : ARENA_WIDTH - def.radius - 10;
-    vx = x < ARENA_WIDTH / 2 ? randomRange(62, 108) : randomRange(-108, -62);
-    vy = randomRange(-8, 8);
+    if (typeId === 'police') {
+      vx = x < ARENA_WIDTH / 2 ? randomRange(120, 156) : randomRange(-156, -120);
+      vy = randomRange(-6, 6);
+    } else {
+      vx = x < ARENA_WIDTH / 2 ? randomRange(62, 108) : randomRange(-108, -62);
+      vy = randomRange(-8, 8);
+    }
   } else if (typeId === 'scooter') {
     vx = randomRange(-46, 46);
     vy = randomRange(-46, 46);

@@ -3,6 +3,7 @@ import {
   ARENA_WIDTH,
   BOOST_COOLDOWN_MS,
   BOOST_DURATION_MS,
+  GRAVITY_STORM_DURATION_MS,
   OBJECT_TYPES,
 } from '../config';
 import {
@@ -28,6 +29,7 @@ let pulseSceneUntil = 0;
 let hitSceneUntil = 0;
 let districtBannerText = '';
 let districtBannerUntil = 0;
+let gravityStormUntil = 0;
 let runStartedAt = Date.now();
 
 export function initBlackHoleGame(container: HTMLElement) {
@@ -90,6 +92,7 @@ export function initBlackHoleGame(container: HTMLElement) {
           <div class="boost-bar"><div id="boost-bar-fill" class="boost-bar-fill"></div></div>
         </div>
         <div id="combo-rush" class="tip-chip hidden">COMBO RUSH</div>
+        <div id="storm-chip" class="tip-chip hidden">ГРАВИТАЦИОННЫЙ ШТОРМ</div>
         <div class="tip-chip">WASD / мышь / тач</div>
       </div>
     </div>
@@ -121,6 +124,7 @@ export function initBlackHoleGame(container: HTMLElement) {
   screen.querySelector<HTMLButtonElement>('#restart-button')?.addEventListener('click', () => {
     restartRunPreservingMeta();
     resetBoost();
+    gravityStormUntil = 0;
     runStartedAt = Date.now();
     showToast('Новый ран начался.', 'info');
   });
@@ -192,7 +196,7 @@ function loop(now: number) {
 
   const current = state.get();
   const movement = getMovementVector(current.holeX, current.holeY);
-  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil);
+  const result = stepSimulation(dt, movement.x, movement.y, Date.now() < boostActiveUntil, Date.now() < gravityStormUntil);
 
   if (result.absorbed.length > 0) {
     const latest = result.absorbed[result.absorbed.length - 1];
@@ -210,6 +214,10 @@ function loop(now: number) {
     } else if (latest.boostRefill) {
       boostCooldownUntil = 0;
       showToast('Ядро рывка! Перезарядка сброшена.', 'info');
+    } else if (latest.combo >= 5) {
+      gravityStormUntil = Date.now() + GRAVITY_STORM_DURATION_MS;
+      pulseSceneUntil = Date.now() + 900;
+      showToast('Гравитационный шторм!', 'success');
     } else if (latest.healed) {
       showToast('Сердце восстановило 1 жизнь.', 'success');
     } else if (latest.bonus) {
@@ -267,6 +275,7 @@ function renderScene() {
   const progress = getProgressToNextLevel(current);
   const now = Date.now();
   const boostActive = now < boostActiveUntil;
+  const gravityStormActive = now < gravityStormUntil;
   const elapsedSec = Math.max(0, Math.floor((now - runStartedAt) / 1000));
 
   setText('hud-mass', String(Math.floor(current.mass)));
@@ -281,7 +290,7 @@ function renderScene() {
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
   }
 
   const districtPanel = document.getElementById('district-panel');
@@ -297,7 +306,7 @@ function renderScene() {
       <div class="panel-title">${district.name}</div>
       <div class="panel-text">${district.goal}</div>
       <div class="panel-subtext">Сильный ход: сначала собирай безопасные объекты, потом переходи на более крупные цели.</div>
-      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : 'Район под контролем'}</div>
+      <div class="status-line ${dangerNearby ? 'danger-line' : ''}">${dangerNearby ? 'Опасность рядом' : gravityStormActive ? 'Шторм притяжения активен' : 'Район под контролем'}</div>
     `;
   }
 
@@ -321,6 +330,7 @@ function renderScene() {
   const boostFill = document.getElementById('boost-bar-fill');
   const boostButton = document.getElementById('boost-button') as HTMLButtonElement | null;
   const comboRush = document.getElementById('combo-rush');
+  const stormChip = document.getElementById('storm-chip');
   if (boostFill) {
     const ratio = now < boostCooldownUntil
       ? 1 - Math.max(0, (boostCooldownUntil - now) / BOOST_COOLDOWN_MS)
@@ -338,6 +348,9 @@ function renderScene() {
   }
   if (comboRush) {
     comboRush.classList.toggle('hidden', current.combo < 4);
+  }
+  if (stormChip) {
+    stormChip.classList.toggle('hidden', !gravityStormActive);
   }
 
   const arena = document.getElementById('arena');
@@ -445,6 +458,7 @@ function renderOverlay() {
   root.querySelector<HTMLButtonElement>('#overlay-restart')?.addEventListener('click', () => {
     restartRunPreservingMeta();
     resetBoost();
+    gravityStormUntil = 0;
     runStartedAt = Date.now();
     showToast('Новый ран начался.', 'info');
   });
