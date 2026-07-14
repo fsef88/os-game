@@ -1,7 +1,7 @@
 # Black Hole
 
 **Жанр:** arcade growth / black hole toy  
-**Версия:** 1.6.0  
+**Версия:** 2.0.0  
 **Статус:** active toy-first pilot
 
 ## Что это
@@ -55,6 +55,15 @@ npm run dev
 - richer suction VFX: линии притяжения и burst-партиклы при поглощении;
 - усиленный object-art pass для транспорта и pickup-подачи;
 - cinematic scene polish: орбитальные кольца, vignette и более живое поле сингулярности;
+- in-arena showcase HUD: timer, размер, мини-лидерборд и danger warning прямо поверх сцены;
+- pulled-состояние объектов в радиусе притяжения для более ощутимого suction-feel;
+- mobile combat HUD внутри арены: skill-orbs, objective rail и minimap/radar;
+- красный impact burst при тяжёлом столкновении;
+- full mobile-game visual rework: почти весь экран занимает игровая city-map сцена, без hero/dashboard/card layout;
+- минимальный HUD внутри игрового мира: жизни, счёт, размер и комбо;
+- усиленная чёрная дыра с blue glow, vortex, dust, particles и spatial distortion feel;
+- juicy object icons: сверкающие монеты, объёмные коробки, glowing magnet pickup и аптечка-бонус;
+- standalone release `RELEASE_v2.0/index.html` для корректного preview без внешнего module loader;
 - сгенерированный city backdrop ближе к concept-art feel;
 - локальный save текущего раннего прогресса.
 

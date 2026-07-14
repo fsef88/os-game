@@ -50,81 +50,51 @@ export function initBlackHoleGame(container: HTMLElement) {
   screen.innerHTML = `
     <div id="toast-layer" class="toast-layer"></div>
 
-    <div class="blackhole-hero">
-      <div class="hero-copy">
-        <div class="eyebrow">concept-style arcade prototype</div>
-        <h1>Чёрная дыра</h1>
-        <p class="subtitle">Один сильный toy: веди дыру по городу, засасывай всё, что меньше тебя, лови комбо и вырасти настолько, чтобы поглотить автобус.</p>
-      </div>
-      <div class="hero-actions"><button id="help-button" class="hero-button">Как играть</button><button id="restart-button" class="hero-button">Новый ран</button></div>
-    </div>
-
-    <div class="hud-row">
-      <div class="hud-pill">⚫ Масса <strong id="hud-mass">0</strong></div>
-      <div class="hud-pill">✦ Счёт <strong id="hud-score">0</strong></div>
-      <div class="hud-pill">🔥 Комбо <strong id="hud-combo">0</strong></div>
-      <div class="hud-pill">🗺 Район <strong id="hud-district">Двор</strong></div>
-      <div class="hud-pill">❤ Жизни <strong id="hud-lives">3</strong></div>
-      <div class="hud-pill">🛡️ Щит <strong id="hud-shield">0</strong></div>
-      <div class="hud-pill">⏱ Время <strong id="hud-time">0:00</strong></div>
-    </div>
-
-    <div class="scene-card" id="scene-card">
-      <div class="scene-background" aria-hidden="true">
-        <div class="district-mark district-a"></div>
-        <div class="district-mark district-b"></div>
-        <div class="district-mark district-c"></div>
-        <div class="lane lane-h"></div>
-        <div class="lane lane-v"></div>
-        <div class="light-pool light-a"></div>
-        <div class="light-pool light-b"></div>
+    <div class="scene-card mobile-world" id="scene-card">
+      <div class="scene-background mega-city" aria-hidden="true">
+        <div class="city-parallax sky-glow"></div>
+        <div class="city-parallax road road-main"></div>
+        <div class="city-parallax road road-cross"></div>
+        <div class="city-parallax road road-diag-a"></div>
+        <div class="city-parallax road road-diag-b"></div>
+        <div class="city-parallax block block-a"></div>
+        <div class="city-parallax block block-b"></div>
+        <div class="city-parallax block block-c"></div>
+        <div class="city-parallax block block-d"></div>
+        <div class="city-parallax park park-a"></div>
+        <div class="city-parallax park park-b"></div>
+        <div class="city-tree tree-a"></div>
+        <div class="city-tree tree-b"></div>
+        <div class="city-tree tree-c"></div>
+        <div class="city-tree tree-d"></div>
+        <div class="city-lights"></div>
       </div>
 
-      <div class="floating-panel left-panel" id="district-panel"></div>
-      <div class="floating-panel right-panel" id="target-panel"></div>
+      <div id="arena" class="arena mobile-playfield" tabindex="0">
+        <div class="mobile-hud">
+          <div class="hud-orb lives">❤️ <strong id="hud-lives">3</strong></div>
+          <div class="hud-orb score">⭐ <strong id="hud-score">0</strong></div>
+          <div class="hud-orb mass">⚫ <strong id="hud-mass">0</strong></div>
+          <div class="hud-orb combo">🔥 <strong id="hud-combo">0</strong></div>
+        </div>
 
-      <div id="arena" class="arena" tabindex="0">
+        <div class="world-actions">
+          <button id="help-button" class="round-game-button small" title="Как играть">?</button>
+          <button id="restart-button" class="round-game-button small" title="Новый ран">↻</button>
+        </div>
+        <button id="boost-button" class="round-game-button boost-float" title="Сингулярный рывок">↯</button>
+
+        <div class="world-title">BLACK HOLE RUN</div>
+        <div class="boss-arrow hidden" id="boss-target"></div>
+        <div class="tiny-danger hidden" id="arena-warning">⚠</div>
         <div id="district-banner" class="district-banner hidden"></div>
-        <div id="boss-target" class="boss-target hidden"></div>
+        <div class="cinematic-vignette" aria-hidden="true"></div>
+        <div class="space-dust" aria-hidden="true"></div>
         <div id="suction-layer" class="suction-layer"></div>
         <div id="popup-layer" class="popup-layer"></div>
         <div id="vfx-layer" class="vfx-layer"></div>
         <div id="hole-field" class="hole-field"></div>
         <div id="hole-core" class="hole-core"></div>
-      </div>
-
-      <div class="legend-row">
-        <div class="legend-title">Сейчас ешь:</div>
-        <div id="legend-track" class="legend-track"></div>
-      </div>
-
-      <div class="dock-panel">
-        <button id="boost-button" class="boost-button">Сингулярный рывок</button>
-        <div class="boost-status">
-          <div class="boost-label">Перегрузка</div>
-          <div class="boost-bar"><div id="boost-bar-fill" class="boost-bar-fill"></div></div>
-        </div>
-        <div id="combo-rush" class="tip-chip hidden">COMBO RUSH</div>
-        <div id="storm-chip" class="tip-chip hidden">ГРАВИТАЦИОННЫЙ ШТОРМ</div>
-        <div id="star-chip" class="tip-chip hidden">ЗВЁЗДНЫЙ ДОЖДЬ</div>
-        <div id="convoy-chip" class="tip-chip hidden">КОНВОЙ</div>
-        <div class="combo-meter"><div class="boost-label">окно комбо</div><div class="boost-bar"><div id="combo-bar-fill" class="combo-bar-fill"></div></div></div>
-        <div class="tip-chip">WASD / мышь / тач</div>
-      </div>
-    </div>
-
-    <div class="bottom-strip">
-      <div class="control-card">
-        <div class="strip-title">Как работает toy</div>
-        <p>Мелкие объекты сами тянутся в радиус всасывания. Крупные — опасны, пока ты не вырос.</p>
-      </div>
-      <div class="control-card">
-        <div class="strip-title">Рекорд</div>
-        <p>Лучшая масса: <strong id="best-mass">0</strong> · Лучшее комбо: <strong id="best-combo">0</strong> · Лучший счёт: <strong id="best-score">0</strong></p>
-      </div>
-      <div class="control-card">
-        <div class="strip-title">Финал</div>
-        <p>Финальная цель — дорасти до автобуса и проглотить его без потери всех жизней.</p>
       </div>
     </div>
 
@@ -149,6 +119,9 @@ export function initBlackHoleGame(container: HTMLElement) {
     showToast('Новый ран начался.', 'info');
   });
   screen.querySelector<HTMLButtonElement>('#boost-button')?.addEventListener('click', () => {
+    activateBoost();
+  });
+  screen.querySelector<HTMLButtonElement>('#arena-boost-button')?.addEventListener('click', () => {
     activateBoost();
   });
 
@@ -263,6 +236,7 @@ function loop(now: number) {
   }
 
   if (result.heavyHit) {
+    spawnSuctionBurst(current.holeX, current.holeY, 'red', 12);
     hitSceneUntil = Date.now() + 420;
     sceneShakeUntil = Date.now() + 260;
     showToast(
@@ -323,13 +297,82 @@ function renderScene() {
   setText('hud-lives', String(current.lives));
   setText('hud-shield', String(current.shieldCharges));
   setText('hud-time', formatTime(elapsedSec));
+  setText('arena-time', formatTime(elapsedSec));
+  setText('arena-absorbed', String(current.absorbedCount));
+  setText('arena-size-score', String(Math.floor(current.mass)));
+  setText('arena-combo-score', current.combo > 1 ? `комбо x${current.combo}` : `+${Math.floor(current.score)} очков`);
   setText('best-mass', String(Math.floor(current.bestMass)));
   setText('best-combo', String(current.bestCombo));
   setText('best-score', String(Math.floor(current.bestScore)));
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${convoyActive ? 'convoy-mode' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${Date.now() < sceneShakeUntil ? 'screen-shake' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
+    sceneCard.className = `scene-card mobile-world district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${convoyActive ? 'convoy-mode' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${Date.now() < sceneShakeUntil ? 'screen-shake' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
+  }
+
+  const arenaLeaderboard = document.getElementById('arena-leaderboard');
+  if (arenaLeaderboard) {
+    const playerScore = Math.max(1, Math.floor(current.score));
+    const rows = [
+      { name: 'Игрок', score: playerScore, active: true },
+      { name: 'BigBoi', score: Math.max(640, Math.floor(playerScore * 0.82 + 420)), active: false },
+      { name: 'VoidLord', score: Math.max(510, Math.floor(playerScore * 0.66 + 360)), active: false },
+      { name: 'NomNom', score: Math.max(390, Math.floor(playerScore * 0.48 + 280)), active: false },
+    ].sort((a, b) => b.score - a.score);
+    arenaLeaderboard.innerHTML = rows.map((row, index) => `
+      <div class="leader-row ${row.active ? 'active' : ''}">
+        <span>${index + 1}. ${row.name}</span>
+        <strong>${row.score}</strong>
+      </div>
+    `).join('');
+  }
+
+  const arenaWarning = document.getElementById('arena-warning');
+  if (arenaWarning) {
+    const tooHeavyNear = current.objects.some((object) => {
+      const def = OBJECT_TYPES[object.typeId];
+      return def.tier > current.sizeLevel && Math.hypot(current.holeX - object.x, current.holeY - object.y) < 118;
+    });
+    arenaWarning.classList.toggle('hidden', !tooHeavyNear);
+  }
+
+  const objectiveRail = document.getElementById('arena-objective-rail');
+  if (objectiveRail) {
+    const nextObject = current.sizeLevel < 2 ? 'коробки' : current.sizeLevel < 3 ? 'скутеры' : current.sizeLevel < 4 ? 'авто' : current.sizeLevel < 5 ? 'такси' : 'автобус';
+    objectiveRail.innerHTML = `
+      <div class="objective-chip live">цель: ${nextObject}</div>
+      <div class="objective-track"><div class="objective-fill" style="width:${Math.round(progress.ratio * 100)}%"></div></div>
+      <div class="objective-chip district">${district.name}</div>
+    `;
+  }
+
+  const arenaBoostButton = document.getElementById('arena-boost-button') as HTMLButtonElement | null;
+  if (arenaBoostButton) {
+    const cooling = now < boostCooldownUntil;
+    arenaBoostButton.disabled = current.gameOver || current.victory || cooling;
+    arenaBoostButton.classList.toggle('ready', !cooling && !current.gameOver && !current.victory);
+    arenaBoostButton.classList.toggle('active', boostActive);
+    arenaBoostButton.textContent = boostActive ? '↯' : cooling ? String(Math.ceil((boostCooldownUntil - now) / 1000)) : '↯';
+  }
+  setText('arena-shield-orb', current.shieldCharges > 0 ? `🛡${current.shieldCharges}` : '🛡');
+  setText('arena-combo-orb', `×${current.combo}`);
+
+  const minimap = document.getElementById('arena-minimap');
+  if (minimap) {
+    const dots = current.objects
+      .filter((object) => ['bus', 'police', 'taxi', 'car', 'star'].includes(object.typeId))
+      .slice(0, 18)
+      .map((object) => {
+        const def = OBJECT_TYPES[object.typeId];
+        const x = (object.x / ARENA_WIDTH) * 100;
+        const y = (object.y / ARENA_HEIGHT) * 100;
+        const tone = def.id === 'bus' ? 'boss' : def.id === 'police' ? 'danger' : def.effect === 'bonus' ? 'bonus' : def.tier <= current.sizeLevel ? 'safe' : 'neutral';
+        return `<span class="map-dot ${tone}" style="left:${x}%; top:${y}%"></span>`;
+      }).join('');
+    minimap.innerHTML = `
+      <div class="map-title">район</div>
+      <div class="map-grid">${dots}<span class="map-player" style="left:${(current.holeX / ARENA_WIDTH) * 100}%; top:${(current.holeY / ARENA_HEIGHT) * 100}%"></span></div>
+    `;
   }
 
   const districtPanel = document.getElementById('district-panel');
@@ -387,11 +430,13 @@ function renderScene() {
   if (boostButton) {
     const cooling = now < boostCooldownUntil;
     boostButton.disabled = current.gameOver || current.victory || cooling;
-    boostButton.textContent = boostActive
-      ? 'Рывок активен'
-      : cooling
-        ? `Перезарядка ${Math.ceil((boostCooldownUntil - now) / 1000)}с`
-        : 'Сингулярный рывок';
+    boostButton.textContent = boostButton.classList.contains('boost-float')
+      ? (boostActive ? '↯' : cooling ? String(Math.ceil((boostCooldownUntil - now) / 1000)) : '↯')
+      : boostActive
+        ? 'Рывок активен'
+        : cooling
+          ? `Перезарядка ${Math.ceil((boostCooldownUntil - now) / 1000)}с`
+          : 'Сингулярный рывок';
   }
   if (comboRush) {
     comboRush.classList.toggle('hidden', current.combo < 4);
@@ -505,8 +550,10 @@ function renderScene() {
   vfxLayer.innerHTML = vfxParticles.map((particle) => `<div class="vfx-particle ${particle.tone}" style="left:${particle.x}px; top:${particle.y}px; width:${particle.size}px; height:${particle.size}px; --dx:${particle.dx}px; --dy:${particle.dy}px;"></div>`).join('');
   current.objects.forEach((object) => {
     const def = OBJECT_TYPES[object.typeId];
+    const distanceToHole = Math.hypot(current.holeX - object.x, current.holeY - object.y);
+    const pulled = def.tier <= current.sizeLevel && distanceToHole < visualRadius + 132;
     const node = document.createElement('div');
-    node.className = `object-node type-${def.id} ${def.tier > current.sizeLevel ? 'danger' : 'safe'} ${def.effect !== 'none' ? 'pickup' : ''} ${def.id === 'bus' ? 'boss' : ''}`;
+    node.className = `object-node type-${def.id} ${def.tier > current.sizeLevel ? 'danger' : 'safe'} ${pulled ? 'pulled' : ''} ${def.effect !== 'none' ? 'pickup' : ''} ${def.id === 'bus' ? 'boss' : ''}`;
     node.style.width = `${def.radius * 2}px`;
     node.style.height = `${def.radius * 2}px`;
     node.style.left = `${object.x - def.radius}px`;
@@ -622,7 +669,7 @@ function getObjectSpriteMarkup(typeId: keyof typeof OBJECT_TYPES): string {
     case 'star':
       return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 9l6 13 15 2-11 10 3 15-13-7-13 7 3-15-11-10 15-2z" fill="#ffe66d"/><circle cx="32" cy="32" r="6" fill="#fff6b8"/></svg>`;
     case 'heart':
-      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 52c-2-2-17-11-17-24 0-7 5-12 11-12 3 0 5 1 6 4 1-3 3-4 6-4 6 0 11 5 11 12 0 13-15 22-17 24z" fill="#ff7187"/></svg>`;
+      return `<svg class="obj-svg medkit-svg" viewBox="0 0 72 72" aria-hidden="true"><rect x="13" y="22" width="46" height="36" rx="12" fill="#fff5f7"/><rect x="24" y="14" width="24" height="14" rx="6" fill="#ff7187"/><path d="M32 31h8v7h7v8h-7v7h-8v-7h-7v-8h7z" fill="#ff4566"/><path d="M18 27h36" stroke="#ffd1da" stroke-width="3" opacity=".7"/></svg>`;
     case 'shield':
       return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 10l16 6v12c0 11-7 19-16 26-9-7-16-15-16-26V16z" fill="#6fb7ff"/><path d="M32 18v26" stroke="#d8f0ff" stroke-width="4"/><path d="M21 28h22" stroke="#d8f0ff" stroke-width="4"/></svg>`;
     case 'cone':
@@ -630,7 +677,7 @@ function getObjectSpriteMarkup(typeId: keyof typeof OBJECT_TYPES): string {
     case 'scooter':
       return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="44" r="7" fill="#7fd6ff"/><circle cx="44" cy="44" r="7" fill="#7fd6ff"/><path d="M18 38h14l7-14h4" stroke="#9ce7ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M39 24v-8" stroke="#9ce7ff" stroke-width="4" stroke-linecap="round"/></svg>`;
     case 'core':
-      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="18" fill="#627cff" opacity="0.35"/><path d="M32 14c6 8 6 28 0 36-6-8-6-28 0-36zm-18 18c8-6 28-6 36 0-8 6-28 6-36 0z" fill="#8ab0ff"/></svg>`;
+      return `<svg class="obj-svg magnet-svg" viewBox="0 0 72 72" aria-hidden="true"><path d="M20 18h12v25c0 5 3 8 7 8s7-3 7-8V18h12v26c0 13-8 22-19 22S20 57 20 44z" fill="#7aa2ff"/><path d="M20 18h12v13H20zm26 0h12v13H46z" fill="#ff5f78"/><path d="M28 45c2 6 6 9 11 9s9-3 11-9" stroke="#dff5ff" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="35" r="20" fill="#7fd6ff" opacity=".13"/></svg>`;
     case 'car':
       return `<svg class="obj-svg vehicle-svg" viewBox="0 0 96 64" aria-hidden="true"><ellipse cx="48" cy="52" rx="33" ry="6" fill="#060913" opacity=".36"/><path d="M16 30c4-9 12-14 23-14h18c9 0 17 5 23 14l6 4v12c0 5-4 9-9 9H19c-5 0-9-4-9-9V34z" fill="#f15f67"/><path d="M34 20h20c6 0 11 3 16 10H24c3-6 6-10 10-10z" fill="#ff8a8f"/><path d="M35 22h12v10H27c2-5 5-8 8-10zm15 0h5c5 0 9 3 13 10H50z" fill="#dff8ff" opacity=".86"/><circle cx="25" cy="51" r="7" fill="#151a35"/><circle cx="71" cy="51" r="7" fill="#151a35"/><circle cx="25" cy="51" r="3" fill="#8fa1c8"/><circle cx="71" cy="51" r="3" fill="#8fa1c8"/><path d="M12 39h10M74 39h10" stroke="#ffe9a6" stroke-width="4" stroke-linecap="round"/></svg>`;
     case 'taxi':
