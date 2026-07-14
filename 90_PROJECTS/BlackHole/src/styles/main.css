@@ -61,10 +61,24 @@ body { min-height: 100vh; }
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: url('../assets/scene_bg_v14.png') center/cover no-repeat;
-  opacity: 0.82;
+  opacity: 0.9;
 }
-.district-mark { position: absolute; border-radius: 999px; filter: blur(32px); opacity: .34; }
+.scene-card.district-0 .scene-background {
+  background:
+    linear-gradient(180deg, rgba(18, 24, 54, 0.58), rgba(11, 16, 36, 0.74)),
+    url('../assets/scene_yard_v15.png') center/cover no-repeat;
+}
+.scene-card.district-1 .scene-background {
+  background:
+    linear-gradient(180deg, rgba(30, 23, 43, 0.55), rgba(19, 18, 32, 0.72)),
+    url('../assets/scene_parking_v15.png') center/cover no-repeat;
+}
+.scene-card.district-2 .scene-background {
+  background:
+    linear-gradient(180deg, rgba(43, 22, 34, 0.52), rgba(18, 13, 21, 0.76)),
+    url('../assets/scene_avenue_v15.png') center/cover no-repeat;
+}
+.district-mark { position: absolute; border-radius: 999px; filter: blur(32px); opacity: .26; }
 .district-a { width: 220px; height: 220px; left: -30px; top: 120px; background: rgba(127,214,255,.18); }
 .district-b { width: 280px; height: 280px; right: 8%; top: 80px; background: rgba(245,199,108,.14); }
 .district-c { width: 220px; height: 220px; left: 34%; bottom: -30px; background: rgba(255,102,117,.12); }
@@ -76,12 +90,32 @@ body { min-height: 100vh; }
 .light-b { width: 210px; height: 140px; right: 22%; bottom: 18%; background: rgba(255,102,117,.08); }
 
 .arena {
-  position: relative; width: 1040px; height: 620px; margin: 0 auto; border-radius: 32px;
+  position: relative; width: 1040px; height: 620px; margin: 0 auto; border-radius: 36px;
   background:
-    radial-gradient(circle at center, rgba(255,255,255,.04), rgba(0,0,0,.12)),
+    radial-gradient(circle at center, rgba(255,255,255,.06), rgba(0,0,0,.12) 44%, rgba(0,0,0,.22) 100%),
     rgba(0,0,0,.08);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), inset 0 0 60px rgba(0,0,0,.18), 0 20px 40px rgba(0,0,0,.18);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    inset 0 0 120px rgba(0,0,0,.28),
+    0 24px 48px rgba(0,0,0,.22);
   overflow: hidden;
+}
+.arena::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,.05), transparent 34%),
+    linear-gradient(180deg, rgba(10,12,24,.06), rgba(10,12,24,.14));
+  pointer-events: none;
+}
+.arena::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), inset 0 -40px 80px rgba(0,0,0,.24);
+  pointer-events: none;
 }
 
 .floating-panel {
@@ -112,11 +146,24 @@ body { min-height: 100vh; }
 .hidden { display: none !important; }
 
 .hole-field {
-  position: absolute; border-radius: 999px; background: radial-gradient(circle, rgba(127,214,255,.28) 0%, rgba(127,214,255,.10) 46%, rgba(127,214,255,0) 72%); pointer-events: none;
+  position: absolute;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(127,214,255,.34) 0%, rgba(127,214,255,.14) 40%, rgba(127,214,255,0) 74%),
+    radial-gradient(circle, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 62%);
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 .hole-core {
-  position: absolute; border-radius: 999px; background: radial-gradient(circle at 50% 50%, #05060a 0%, #000 58%, #273369 100%);
-  box-shadow: 0 0 0 6px rgba(127,214,255,.16), 0 0 46px rgba(127,214,255,.24), inset 0 -8px 18px rgba(255,255,255,.04);
+  position: absolute;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, #040509 0%, #000 52%, #1e2f6d 78%, #77bfff 100%);
+  box-shadow:
+    0 0 0 6px rgba(127,214,255,.16),
+    0 0 36px rgba(127,214,255,.2),
+    0 0 80px rgba(77,171,247,.18),
+    inset 0 -8px 18px rgba(255,255,255,.04);
 }
 .object-node {
   position: absolute;

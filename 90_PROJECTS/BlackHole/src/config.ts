@@ -1,5 +1,5 @@
-export const VERSION = '1.4.0';
-export const BUILD = '2026-07-14-black-hole-v14';
+export const VERSION = '1.5.0';
+export const BUILD = '2026-07-14-black-hole-v15';
 
 export const ARENA_WIDTH = 1040;
 export const ARENA_HEIGHT = 620;

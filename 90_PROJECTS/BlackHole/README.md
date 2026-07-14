@@ -1,7 +1,7 @@
 # Black Hole
 
 **Жанр:** arcade growth / black hole toy  
-**Версия:** 1.4.0  
+**Версия:** 1.5.0  
 **Статус:** active toy-first pilot
 
 ## Что это
@@ -51,7 +51,8 @@ npm run dev
 - onboarding первого запуска и кнопка `Как играть`;
 - event-driven pressure (`Гравитационный шторм`, `Звёздный дождь`, полиция);
 - combo meter для лучшей читаемости темпа;
-- сгенерированный city backdrop ближе к concept-art feel;
+- district-art backgrounds для трёх районов;
+сгенерированный city backdrop ближе к concept-art feel;
 - локальный save текущего раннего прогресса.
 
 ## Документация

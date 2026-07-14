@@ -5,7 +5,7 @@ export default defineConfig({
   build: {
     target: 'es2020',
     outDir: 'dist',
-    assetsInlineLimit: 100000000,
+    assetsInlineLimit: 0,
   },
   server: {
     port: 5173,
