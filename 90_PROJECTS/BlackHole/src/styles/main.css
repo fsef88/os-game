@@ -206,7 +206,19 @@ body { min-height: 100vh; }
 .scene-card.combo-rush .legend-row { box-shadow: 0 0 0 1px rgba(245,199,108,.10); }
 .boss-target.ready { color: #f6cf74; box-shadow: 0 0 18px rgba(246,207,116,.18); }
 
+.popup-layer { position:absolute; inset:0; z-index:5; pointer-events:none; }
+.float-popup { position:absolute; transform: translate(-50%, -50%); font-weight:900; animation: popupRise .9s ease-out forwards; text-shadow: 0 4px 10px rgba(0,0,0,.25); }
+.float-popup.mass { color:#f6cf74; }
+.float-popup.score { color:#7fd6ff; }
+.float-popup.warn { color:#ff9da8; }
+@keyframes popupRise { 0% { opacity:0; transform: translate(-50%, -10px) scale(.92);} 10% {opacity:1;} 100% { opacity:0; transform: translate(-50%, -58px) scale(1.06);} }
+.scene-card.screen-shake { animation: screenShake .22s linear; }
+@keyframes screenShake { 0%{transform:translate(0,0);} 20%{transform:translate(-2px,1px);} 40%{transform:translate(3px,-1px);} 60%{transform:translate(-2px,0);} 80%{transform:translate(2px,1px);} 100%{transform:translate(0,0);} }
+
 .scene-card.gravity-storm { box-shadow: 0 0 0 2px rgba(127,214,255,.20), 0 0 48px rgba(127,214,255,.14), 0 20px 42px rgba(0,0,0,.26); }
 .tip-chip.hidden { display: none !important; }
 
 .scene-card.star-shower { box-shadow: 0 0 0 2px rgba(255,230,109,.16), 0 0 40px rgba(255,230,109,.12), 0 20px 42px rgba(0,0,0,.26); }
+
+.hero-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.tutorial-card { max-width: 560px; }

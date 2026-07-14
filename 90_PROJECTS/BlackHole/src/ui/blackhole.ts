@@ -33,6 +33,10 @@ let districtBannerText = '';
 let districtBannerUntil = 0;
 let gravityStormUntil = 0;
 let runStartedAt = Date.now();
+let sceneShakeUntil = 0;
+let popupId = 1;
+let floatingPopups: Array<{ id: number; x: number; y: number; text: string; tone: 'mass' | 'score' | 'warn'; expiresAt: number }> = [];
+
 
 export function initBlackHoleGame(container: HTMLElement) {
   if (mounted) return;
@@ -49,7 +53,7 @@ export function initBlackHoleGame(container: HTMLElement) {
         <h1>Чёрная дыра</h1>
         <p class="subtitle">Один сильный toy: веди дыру по городу, засасывай всё, что меньше тебя, лови комбо и вырасти настолько, чтобы поглотить автобус.</p>
       </div>
-      <button id="restart-button" class="hero-button">Новый ран</button>
+      <div class="hero-actions"><button id="help-button" class="hero-button">Как играть</button><button id="restart-button" class="hero-button">Новый ран</button></div>
     </div>
 
     <div class="hud-row">
@@ -78,6 +82,7 @@ export function initBlackHoleGame(container: HTMLElement) {
       <div id="arena" class="arena" tabindex="0">
         <div id="district-banner" class="district-banner hidden"></div>
         <div id="boss-target" class="boss-target hidden"></div>
+        <div id="popup-layer" class="popup-layer"></div>
         <div id="hole-field" class="hole-field"></div>
         <div id="hole-core" class="hole-core"></div>
       </div>
@@ -124,6 +129,9 @@ export function initBlackHoleGame(container: HTMLElement) {
   if (!arena) throw new Error('Arena not found');
 
   bindControls(arena);
+  screen.querySelector<HTMLButtonElement>('#help-button')?.addEventListener('click', () => {
+    showFirstRunOverlay(true);
+  });
   screen.querySelector<HTMLButtonElement>('#restart-button')?.addEventListener('click', () => {
     restartRunPreservingMeta();
     resetBoost();
@@ -138,7 +146,11 @@ export function initBlackHoleGame(container: HTMLElement) {
   state.subscribe(renderScene);
   renderScene();
   requestAnimationFrame(loop);
+  if (!state.get().firstRunSeen) {
+    showFirstRunOverlay(false);
+  }
 }
+
 
 function bindControls(arena: HTMLDivElement) {
   arena.addEventListener('pointerdown', (event) => {
@@ -207,6 +219,7 @@ function loop(now: number) {
     const latest = result.absorbed[result.absorbed.length - 1];
     if (latest.victory) {
       pulseSceneUntil = Date.now() + 900;
+      spawnPopup(latest.x, latest.y, '+ФИНИШ', 'score');
       showToast('Победа! Автобус исчез в сингулярности.', 'success');
     } else if (latest.districtUp) {
       pulseSceneUntil = Date.now() + 700;
@@ -230,10 +243,13 @@ function loop(now: number) {
     } else if (latest.combo >= 3) {
       showToast(`Комбо x${latest.combo}`, 'info');
     }
+    spawnPopup(latest.x, latest.y, `+${latest.massGain} масса`, 'mass');
+    if (latest.scoreGain > 0) spawnPopup(latest.x + 18, latest.y - 16, `+${latest.scoreGain}`, 'score');
   }
 
   if (result.heavyHit) {
     hitSceneUntil = Date.now() + 420;
+    sceneShakeUntil = Date.now() + 260;
     showToast(
       result.heavyHit.gameOver
         ? 'Слишком тяжело. Ран окончен.'
@@ -296,7 +312,7 @@ function renderScene() {
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${Date.now() < sceneShakeUntil ? 'screen-shake' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
   }
 
   const districtPanel = document.getElementById('district-panel');
@@ -323,7 +339,7 @@ function renderScene() {
       <div class="panel-title">${getCurrentGoalText(current)}</div>
       <div class="target-progress">${progress.next ? `${Math.floor(progress.current)} / ${progress.next}` : 'цель достигнута'}</div>
       <div class="target-bar"><div class="target-bar-fill" style="width:${progress.ratio * 100}%"></div></div>
-      <div class="target-foot">Финальный ориентир: автобус. Слишком крупные объекты опасны, пока уровень размера не позволяет их съесть.</div>
+      <div class="target-foot">${current.sizeLevel >= 5 && district.id === 2 ? 'Конвой запущен: автобусы и полиция стали заметно чаще.' : 'Финальный ориентир: автобус. Слишком крупные объекты опасны, пока уровень размера не позволяет их съесть.'}</div>
     `;
   }
 
@@ -364,9 +380,10 @@ function renderScene() {
   }
 
   const arena = document.getElementById('arena');
+  const popupLayer = document.getElementById('popup-layer');
   const field = document.getElementById('hole-field');
   const hole = document.getElementById('hole-core');
-  if (!arena || !field || !hole) return;
+  if (!arena || !field || !hole || !popupLayer) return;
 
   const visualRadius = boostActive ? holeRadius * 1.28 : holeRadius;
   field.style.width = `${visualRadius * 4.4}px`;
@@ -421,6 +438,8 @@ function renderScene() {
   }
 
   arena.querySelectorAll('.object-node').forEach((node) => node.remove());
+  floatingPopups = floatingPopups.filter((popup) => popup.expiresAt > now);
+  popupLayer.innerHTML = floatingPopups.map((popup) => `<div class="float-popup ${popup.tone}" style="left:${popup.x}px; top:${popup.y}px">${popup.text}</div>`).join('');
   current.objects.forEach((object) => {
     const def = OBJECT_TYPES[object.typeId];
     const node = document.createElement('div');
@@ -443,9 +462,14 @@ function renderOverlay() {
   const root = document.getElementById('overlay-root');
   if (!root) return;
 
+  if (root.dataset.mode === 'tutorial') {
+    return;
+  }
+
   if (!current.gameOver && !current.victory) {
     root.classList.add('hidden');
     root.innerHTML = '';
+    root.dataset.mode = 'none';
     return;
   }
 
@@ -460,6 +484,7 @@ function renderOverlay() {
         <span>Счёт: <strong>${Math.floor(current.score)}</strong></span>
         <span>Лучшее комбо: <strong>${current.bestCombo}</strong></span>
         <span>Ранг: <strong>${getRank(current.score, current.victory)}</strong></span>
+        <span>Медаль: <strong>${getMedal(current)}</strong></span>
       </div>
       <button id="overlay-restart" class="hero-button big">Играть ещё</button>
     </div>
@@ -490,9 +515,42 @@ function renderToast() {
   layer.innerHTML = toastState ? `<div class="toast ${toastState.tone}">${toastState.text}</div>` : '';
 }
 
+function showFirstRunOverlay(force = false) {
+  const root = document.getElementById('overlay-root');
+  if (!root) return;
+  const current = state.get();
+  if (current.firstRunSeen && !force) return;
+
+  root.classList.remove('hidden');
+  root.dataset.mode = 'tutorial';
+  root.innerHTML = `
+    <div class="overlay-backdrop"></div>
+    <div class="overlay-card tutorial-card">
+      <div class="overlay-title">Как играть за 10 секунд</div>
+      <div class="overlay-stats">
+        <span><strong>1.</strong> Веди дыру к мелким объектам</span>
+        <span><strong>2.</strong> Всё меньше тебя засасывается автоматически</span>
+        <span><strong>3.</strong> Расти, лови комбо и избегай слишком больших объектов</span>
+      </div>
+      <button id="tutorial-start" class="hero-button big">Поехали</button>
+    </div>
+  `;
+
+  root.querySelector<HTMLButtonElement>('#tutorial-start')?.addEventListener('click', () => {
+    root.classList.add('hidden');
+    root.innerHTML = '';
+    root.dataset.mode = 'none';
+    if (!current.firstRunSeen) state.set({ firstRunSeen: true });
+  });
+}
+
 function setText(id: string, value: string) {
   const element = document.getElementById(id);
   if (element) element.textContent = value;
+}
+
+function spawnPopup(x: number, y: number, text: string, tone: 'mass' | 'score' | 'warn') {
+  floatingPopups.push({ id: popupId++, x, y, text, tone, expiresAt: Date.now() + 900 });
 }
 
 function formatTime(totalSec: number): string {
@@ -507,4 +565,12 @@ function getRank(score: number, victory: boolean): string {
   if (score >= 900) return 'B';
   if (score >= 400) return 'C';
   return 'D';
+}
+
+function getMedal(current: ReturnType<typeof state.get>): string {
+  if (current.victory && current.lives === 3) return 'Безупречно';
+  if (current.victory) return 'Победа';
+  if (current.bestCombo >= 8) return 'Комбо-мастер';
+  if (current.score >= 1200) return 'Охотник';
+  return 'Новичок';
 }

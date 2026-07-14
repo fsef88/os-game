@@ -32,6 +32,7 @@ export interface GameState {
   totalPlayTime: number;
   firstSeen: number;
   lastSeen: number;
+  firstRunSeen: boolean;
 }
 
 type Listener = () => void;
@@ -75,6 +76,7 @@ export function createInitialState(now = Date.now()): GameState {
     totalPlayTime: 0,
     firstSeen: now,
     lastSeen: now,
+    firstRunSeen: false,
   };
 }
 

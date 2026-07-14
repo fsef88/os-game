@@ -22,6 +22,10 @@ export interface AbsorbEvent {
   combo: number;
   mass: number;
   score: number;
+  massGain: number;
+  scoreGain: number;
+  x: number;
+  y: number;
   sizeUp?: number;
   districtUp?: string;
   victory?: boolean;
@@ -183,6 +187,10 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
         combo,
         mass,
         score,
+        massGain,
+        scoreGain,
+        x: object.x,
+        y: object.y,
         sizeUp: sizeLevel > previousLevel ? sizeLevel : undefined,
         districtUp: districtIndex > previousDistrict ? DISTRICTS[districtIndex].name : undefined,
         victory,
@@ -191,7 +199,8 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
         bonus,
       });
 
-      respawnObject(object, districtIndex, holeX, holeY, starShowerActive);
+      const busRushActive = districtIndex === 2 && sizeLevel >= 5;
+      respawnObject(object, districtIndex, holeX, holeY, starShowerActive, busRushActive);
       continue;
     }
 
@@ -295,8 +304,13 @@ function createObject(districtIndex: number, holeX: number, holeY: number, force
   return { id: nextObjectId++, typeId, x, y, vx, vy };
 }
 
-function respawnObject(object: GameObject, districtIndex: number, holeX: number, holeY: number, starShowerActive = false) {
-  const forcedTypeId = starShowerActive && Math.random() < 0.45 ? 'star' : undefined;
+function respawnObject(object: GameObject, districtIndex: number, holeX: number, holeY: number, starShowerActive = false, busRushActive = false) {
+  let forcedTypeId: ObjectTypeId | undefined;
+  if (starShowerActive && Math.random() < 0.45) forcedTypeId = 'star';
+  if (!forcedTypeId && busRushActive && Math.random() < 0.45) {
+    const rushPool: ObjectTypeId[] = ['bus', 'police', 'taxi'];
+    forcedTypeId = rushPool[Math.floor(Math.random() * rushPool.length)];
+  }
   Object.assign(object, createObject(districtIndex, holeX, holeY, forcedTypeId));
 }
 
