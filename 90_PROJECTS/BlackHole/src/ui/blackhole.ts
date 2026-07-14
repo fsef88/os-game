@@ -37,6 +37,8 @@ let runStartedAt = Date.now();
 let sceneShakeUntil = 0;
 let popupId = 1;
 let floatingPopups: Array<{ id: number; x: number; y: number; text: string; tone: 'mass' | 'score' | 'warn'; expiresAt: number }> = [];
+let vfxId = 1;
+let vfxParticles: Array<{ id: number; x: number; y: number; dx: number; dy: number; size: number; tone: 'cyan' | 'gold' | 'red'; expiresAt: number }> = [];
 
 
 export function initBlackHoleGame(container: HTMLElement) {
@@ -84,7 +86,9 @@ export function initBlackHoleGame(container: HTMLElement) {
       <div id="arena" class="arena" tabindex="0">
         <div id="district-banner" class="district-banner hidden"></div>
         <div id="boss-target" class="boss-target hidden"></div>
+        <div id="suction-layer" class="suction-layer"></div>
         <div id="popup-layer" class="popup-layer"></div>
+        <div id="vfx-layer" class="vfx-layer"></div>
         <div id="hole-field" class="hole-field"></div>
         <div id="hole-core" class="hole-core"></div>
       </div>
@@ -104,6 +108,7 @@ export function initBlackHoleGame(container: HTMLElement) {
         <div id="storm-chip" class="tip-chip hidden">ГРАВИТАЦИОННЫЙ ШТОРМ</div>
         <div id="star-chip" class="tip-chip hidden">ЗВЁЗДНЫЙ ДОЖДЬ</div>
         <div id="convoy-chip" class="tip-chip hidden">КОНВОЙ</div>
+        <div class="combo-meter"><div class="boost-label">окно комбо</div><div class="boost-bar"><div id="combo-bar-fill" class="combo-bar-fill"></div></div></div>
         <div class="tip-chip">WASD / мышь / тач</div>
       </div>
     </div>
@@ -222,6 +227,9 @@ function loop(now: number) {
 
   if (result.absorbed.length > 0) {
     const latest = result.absorbed[result.absorbed.length - 1];
+    for (const event of result.absorbed) {
+      spawnSuctionBurst(event.x, event.y, event.bonus ? 'gold' : event.victory ? 'cyan' : 'cyan', Math.min(10, 4 + event.combo));
+    }
     if (latest.victory) {
       pulseSceneUntil = Date.now() + 900;
       spawnPopup(latest.x, latest.y, '+ФИНИШ', 'score');
@@ -321,7 +329,7 @@ function renderScene() {
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${Date.now() < sceneShakeUntil ? 'screen-shake' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${gravityStormActive ? 'gravity-storm' : ''} ${starShowerActive ? 'star-shower' : ''} ${convoyActive ? 'convoy-mode' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''} ${Date.now() < sceneShakeUntil ? 'screen-shake' : ''} ${current.combo >= 4 ? 'combo-rush' : ''}`;
   }
 
   const districtPanel = document.getElementById('district-panel');
@@ -404,9 +412,11 @@ function renderScene() {
 
   const arena = document.getElementById('arena');
   const popupLayer = document.getElementById('popup-layer');
+  const vfxLayer = document.getElementById('vfx-layer');
+  const suctionLayer = document.getElementById('suction-layer');
   const field = document.getElementById('hole-field');
   const hole = document.getElementById('hole-core');
-  if (!arena || !field || !hole || !popupLayer) return;
+  if (!arena || !field || !hole || !popupLayer || !vfxLayer || !suctionLayer) return;
 
   const visualRadius = boostActive ? holeRadius * 1.28 : holeRadius;
   field.style.width = `${visualRadius * 4.4}px`;
@@ -419,6 +429,27 @@ function renderScene() {
   hole.style.left = `${current.holeX - holeRadius}px`;
   hole.style.top = `${current.holeY - holeRadius}px`;
   hole.classList.toggle('shielded', current.shieldCharges > 0);
+  hole.classList.toggle('storm-core', gravityStormActive);
+
+  const suctionReach = visualRadius + (boostActive || gravityStormActive ? 170 : 132);
+  const suctionLines = current.objects
+    .filter((object) => {
+      const def = OBJECT_TYPES[object.typeId];
+      const distance = Math.hypot(current.holeX - object.x, current.holeY - object.y);
+      return def.tier <= current.sizeLevel && distance < suctionReach && distance > holeRadius * 0.65;
+    })
+    .slice(0, 14)
+    .map((object) => {
+      const def = OBJECT_TYPES[object.typeId];
+      const dx = current.holeX - object.x;
+      const dy = current.holeY - object.y;
+      const length = Math.max(12, Math.hypot(dx, dy));
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const opacity = Math.max(0.18, Math.min(0.72, 1 - length / suctionReach));
+      return `<div class="suction-line type-${def.effect === 'bonus' ? 'gold' : 'cyan'}" style="left:${object.x}px; top:${object.y}px; width:${length}px; transform: rotate(${angle}deg); opacity:${opacity};"></div>`;
+    })
+    .join('');
+  suctionLayer.innerHTML = suctionLines;
 
   const objectMap = new Map<string, number>();
   current.objects.forEach((object) => {
@@ -469,7 +500,9 @@ function renderScene() {
 
   arena.querySelectorAll('.object-node').forEach((node) => node.remove());
   floatingPopups = floatingPopups.filter((popup) => popup.expiresAt > now);
+  vfxParticles = vfxParticles.filter((particle) => particle.expiresAt > now);
   popupLayer.innerHTML = floatingPopups.map((popup) => `<div class="float-popup ${popup.tone}" style="left:${popup.x}px; top:${popup.y}px">${popup.text}</div>`).join('');
+  vfxLayer.innerHTML = vfxParticles.map((particle) => `<div class="vfx-particle ${particle.tone}" style="left:${particle.x}px; top:${particle.y}px; width:${particle.size}px; height:${particle.size}px; --dx:${particle.dx}px; --dy:${particle.dy}px;"></div>`).join('');
   current.objects.forEach((object) => {
     const def = OBJECT_TYPES[object.typeId];
     const node = document.createElement('div');
@@ -599,13 +632,13 @@ function getObjectSpriteMarkup(typeId: keyof typeof OBJECT_TYPES): string {
     case 'core':
       return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="18" fill="#627cff" opacity="0.35"/><path d="M32 14c6 8 6 28 0 36-6-8-6-28 0-36zm-18 18c8-6 28-6 36 0-8 6-28 6-36 0z" fill="#8ab0ff"/></svg>`;
     case 'car':
-      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="18" width="40" height="28" rx="12" fill="#ff7272"/><rect x="21" y="24" width="22" height="10" rx="5" fill="#ffe5e5"/><circle cx="20" cy="48" r="4" fill="#1b2148"/><circle cx="44" cy="48" r="4" fill="#1b2148"/></svg>`;
+      return `<svg class="obj-svg vehicle-svg" viewBox="0 0 96 64" aria-hidden="true"><ellipse cx="48" cy="52" rx="33" ry="6" fill="#060913" opacity=".36"/><path d="M16 30c4-9 12-14 23-14h18c9 0 17 5 23 14l6 4v12c0 5-4 9-9 9H19c-5 0-9-4-9-9V34z" fill="#f15f67"/><path d="M34 20h20c6 0 11 3 16 10H24c3-6 6-10 10-10z" fill="#ff8a8f"/><path d="M35 22h12v10H27c2-5 5-8 8-10zm15 0h5c5 0 9 3 13 10H50z" fill="#dff8ff" opacity=".86"/><circle cx="25" cy="51" r="7" fill="#151a35"/><circle cx="71" cy="51" r="7" fill="#151a35"/><circle cx="25" cy="51" r="3" fill="#8fa1c8"/><circle cx="71" cy="51" r="3" fill="#8fa1c8"/><path d="M12 39h10M74 39h10" stroke="#ffe9a6" stroke-width="4" stroke-linecap="round"/></svg>`;
     case 'taxi':
-      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="18" width="40" height="28" rx="12" fill="#ffd94e"/><rect x="21" y="24" width="22" height="10" rx="5" fill="#fff3b0"/><rect x="26" y="14" width="12" height="6" rx="2" fill="#1f2136"/></svg>`;
+      return `<svg class="obj-svg vehicle-svg" viewBox="0 0 96 64" aria-hidden="true"><ellipse cx="48" cy="52" rx="34" ry="6" fill="#060913" opacity=".34"/><path d="M14 31c5-10 13-15 25-15h18c10 0 18 5 25 15l5 4v11c0 5-4 9-9 9H18c-5 0-9-4-9-9V35z" fill="#ffd84d"/><rect x="40" y="9" width="16" height="8" rx="3" fill="#20243d"/><path d="M28 33h40" stroke="#1d2138" stroke-width="4" stroke-dasharray="5 4"/><path d="M34 21h31c4 2 7 5 10 10H22c3-5 7-8 12-10z" fill="#fff4b4"/><circle cx="25" cy="51" r="7" fill="#14172d"/><circle cx="72" cy="51" r="7" fill="#14172d"/></svg>`;
     case 'bus':
-      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="14" width="44" height="36" rx="12" fill="#4dabf7"/><rect x="16" y="20" width="32" height="10" rx="4" fill="#d6efff"/><rect x="16" y="34" width="14" height="8" rx="3" fill="#d6efff"/><rect x="34" y="34" width="14" height="8" rx="3" fill="#d6efff"/></svg>`;
+      return `<svg class="obj-svg vehicle-svg" viewBox="0 0 112 64" aria-hidden="true"><ellipse cx="56" cy="55" rx="43" ry="6" fill="#050814" opacity=".38"/><rect x="10" y="14" width="92" height="38" rx="12" fill="#419ff2"/><path d="M18 20h58c9 0 16 7 16 16H18z" fill="#61b9ff"/><rect x="18" y="22" width="16" height="12" rx="3" fill="#d9f3ff"/><rect x="38" y="22" width="16" height="12" rx="3" fill="#d9f3ff"/><rect x="58" y="22" width="16" height="12" rx="3" fill="#d9f3ff"/><rect x="79" y="22" width="14" height="12" rx="3" fill="#d9f3ff"/><path d="M18 41h76" stroke="#2079c9" stroke-width="4"/><circle cx="28" cy="53" r="7" fill="#101735"/><circle cx="84" cy="53" r="7" fill="#101735"/></svg>`;
     case 'police':
-      return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="18" width="40" height="28" rx="12" fill="#80bfff"/><rect x="21" y="24" width="22" height="10" rx="5" fill="#eff7ff"/><rect x="24" y="14" width="8" height="6" rx="2" fill="#ff7187"/><rect x="32" y="14" width="8" height="6" rx="2" fill="#7fd6ff"/></svg>`;
+      return `<svg class="obj-svg vehicle-svg" viewBox="0 0 96 64" aria-hidden="true"><ellipse cx="48" cy="52" rx="34" ry="6" fill="#060913" opacity=".34"/><path d="M14 31c5-10 13-15 25-15h18c10 0 18 5 25 15l5 4v11c0 5-4 9-9 9H18c-5 0-9-4-9-9V35z" fill="#76b8ff"/><path d="M18 41h60" stroke="#f5f8ff" stroke-width="7"/><path d="M35 21h31c4 2 7 5 10 10H22c3-5 7-8 13-10z" fill="#eef8ff"/><rect x="40" y="10" width="8" height="7" rx="2" fill="#ff6276"/><rect x="49" y="10" width="8" height="7" rx="2" fill="#7fd6ff"/><circle cx="25" cy="51" r="7" fill="#14172d"/><circle cx="72" cy="51" r="7" fill="#14172d"/></svg>`;
     default:
       return `<svg class="obj-svg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="18" fill="#ffffff" opacity="0.6"/></svg>`;
   }
@@ -613,6 +646,23 @@ function getObjectSpriteMarkup(typeId: keyof typeof OBJECT_TYPES): string {
 
 function spawnPopup(x: number, y: number, text: string, tone: 'mass' | 'score' | 'warn') {
   floatingPopups.push({ id: popupId++, x, y, text, tone, expiresAt: Date.now() + 900 });
+}
+
+function spawnSuctionBurst(x: number, y: number, tone: 'cyan' | 'gold' | 'red', count: number) {
+  for (let i = 0; i < count; i += 1) {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 18 + Math.random() * 44;
+    vfxParticles.push({
+      id: vfxId++,
+      x,
+      y,
+      dx: Math.cos(angle) * distance,
+      dy: Math.sin(angle) * distance,
+      size: 4 + Math.random() * 7,
+      tone,
+      expiresAt: Date.now() + 640,
+    });
+  }
 }
 
 function formatTime(totalSec: number): string {
