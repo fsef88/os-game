@@ -24,6 +24,8 @@ let keyboard = { up: false, down: false, left: false, right: false };
 let lastFrame = performance.now();
 let boostActiveUntil = 0;
 let boostCooldownUntil = 0;
+let pulseSceneUntil = 0;
+let hitSceneUntil = 0;
 
 export function initBlackHoleGame(container: HTMLElement) {
   if (mounted) return;
@@ -45,6 +47,7 @@ export function initBlackHoleGame(container: HTMLElement) {
 
     <div class="hud-row">
       <div class="hud-pill">⚫ Масса <strong id="hud-mass">0</strong></div>
+      <div class="hud-pill">✦ Счёт <strong id="hud-score">0</strong></div>
       <div class="hud-pill">🔥 Комбо <strong id="hud-combo">0</strong></div>
       <div class="hud-pill">🗺 Район <strong id="hud-district">Двор</strong></div>
       <div class="hud-pill">❤ Жизни <strong id="hud-lives">3</strong></div>
@@ -91,7 +94,7 @@ export function initBlackHoleGame(container: HTMLElement) {
       </div>
       <div class="control-card">
         <div class="strip-title">Рекорд</div>
-        <p>Лучшая масса: <strong id="best-mass">0</strong> · Лучшее комбо: <strong id="best-combo">0</strong></p>
+        <p>Лучшая масса: <strong id="best-mass">0</strong> · Лучшее комбо: <strong id="best-combo">0</strong> · Лучший счёт: <strong id="best-score">0</strong></p>
       </div>
       <div class="control-card">
         <div class="strip-title">Финал</div>
@@ -186,17 +189,28 @@ function loop(now: number) {
   if (result.absorbed.length > 0) {
     const latest = result.absorbed[result.absorbed.length - 1];
     if (latest.victory) {
+      pulseSceneUntil = Date.now() + 900;
       showToast('Победа! Автобус исчез в сингулярности.', 'success');
     } else if (latest.districtUp) {
+      pulseSceneUntil = Date.now() + 700;
       showToast(`Новый район: ${latest.districtUp}`, 'success');
     } else if (latest.sizeUp) {
+      pulseSceneUntil = Date.now() + 520;
       showToast(`Рост! Размер ${latest.sizeUp}`, 'success');
+    } else if (latest.boostRefill) {
+      boostCooldownUntil = 0;
+      showToast('Ядро рывка! Перезарядка сброшена.', 'info');
+    } else if (latest.healed) {
+      showToast('Сердце восстановило 1 жизнь.', 'success');
+    } else if (latest.bonus) {
+      showToast('Бонусная звезда! Дополнительные очки.', 'success');
     } else if (latest.combo >= 3) {
       showToast(`Комбо x${latest.combo}`, 'info');
     }
   }
 
   if (result.heavyHit) {
+    hitSceneUntil = Date.now() + 420;
     showToast(
       result.heavyHit.gameOver
         ? 'Слишком тяжело. Ран окончен.'
@@ -245,15 +259,17 @@ function renderScene() {
   const boostActive = now < boostActiveUntil;
 
   setText('hud-mass', String(Math.floor(current.mass)));
+  setText('hud-score', String(Math.floor(current.score)));
   setText('hud-combo', String(current.combo));
   setText('hud-district', district.name);
   setText('hud-lives', String(current.lives));
   setText('best-mass', String(Math.floor(current.bestMass)));
   setText('best-combo', String(current.bestCombo));
+  setText('best-score', String(Math.floor(current.bestScore)));
 
   const sceneCard = document.getElementById('scene-card');
   if (sceneCard) {
-    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''}`;
+    sceneCard.className = `scene-card district-${district.id} ${boostActive ? 'boosting' : ''} ${Date.now() < pulseSceneUntil ? 'pulse-up' : ''} ${Date.now() < hitSceneUntil ? 'hit-flash' : ''}`;
   }
 
   const districtPanel = document.getElementById('district-panel');
@@ -342,7 +358,7 @@ function renderScene() {
   current.objects.forEach((object) => {
     const def = OBJECT_TYPES[object.typeId];
     const node = document.createElement('div');
-    node.className = `object-node ${def.tier > current.sizeLevel ? 'danger' : 'safe'}`;
+    node.className = `object-node ${def.tier > current.sizeLevel ? 'danger' : 'safe'} ${def.effect !== 'none' ? 'pickup' : ''} ${def.id === 'bus' ? 'boss' : ''}`;
     node.style.width = `${def.radius * 2}px`;
     node.style.height = `${def.radius * 2}px`;
     node.style.left = `${object.x - def.radius}px`;

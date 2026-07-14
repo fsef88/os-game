@@ -6,7 +6,9 @@ import {
   MAX_OBJECTS,
   OBJECT_TYPES,
   SIZE_LEVELS,
+  START_LIVES,
   TARGET_MASS_TO_WIN,
+  type ObjectEffect,
 } from '../config';
 import { track } from '../analytics';
 import { createInitialState, state, type GameObject, type GameState } from '../state';
@@ -18,9 +20,13 @@ export interface AbsorbEvent {
   label: string;
   combo: number;
   mass: number;
+  score: number;
   sizeUp?: number;
   districtUp?: string;
   victory?: boolean;
+  boostRefill?: boolean;
+  healed?: boolean;
+  bonus?: boolean;
 }
 
 export interface HeavyHitEvent {
@@ -53,7 +59,7 @@ export function getCurrentDistrict(current = state.get()): (typeof DISTRICTS)[nu
 
 export function getCurrentGoalText(current = state.get()): string {
   if (current.victory) return 'Автобус проглочен — район под контролем';
-  if (current.sizeLevel < 2) return 'Ешь монеты и коробки, чтобы вырасти';
+  if (current.sizeLevel < 2) return 'Ешь монеты, коробки и бонусы, чтобы вырасти';
   if (current.sizeLevel < 3) return 'Теперь можно охотиться на конусы и скутеры';
   if (current.sizeLevel < 4) return 'Пора переходить на автомобили';
   if (current.sizeLevel < 5) return 'Ты уже опасен даже для крупных машин';
@@ -74,45 +80,41 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
   heavyHit?: HeavyHitEvent;
 } {
   const current = state.get();
-  if (current.gameOver || current.victory) {
-    return { absorbed: [] };
-  }
+  if (current.gameOver || current.victory) return { absorbed: [] };
 
   const dt = dtMs / 1000;
   const holeRadius = getHoleRadius(current);
   const effectiveRadius = boostActive ? holeRadius * 1.28 : holeRadius;
   const speed = Math.max(120, 260 - holeRadius * 1.2) * (boostActive ? 1.22 : 1);
-  let holeX = clamp(current.holeX + movementX * speed * dt, holeRadius, ARENA_WIDTH - holeRadius);
-  let holeY = clamp(current.holeY + movementY * speed * dt, holeRadius, ARENA_HEIGHT - holeRadius);
+  const holeX = clamp(current.holeX + movementX * speed * dt, holeRadius, ARENA_WIDTH - holeRadius);
+  const holeY = clamp(current.holeY + movementY * speed * dt, holeRadius, ARENA_HEIGHT - holeRadius);
 
   const objects = current.objects.map((object) => ({ ...object }));
   const absorbed: AbsorbEvent[] = [];
   let heavyHit: HeavyHitEvent | undefined;
   let combo = current.combo;
   let mass = current.mass;
+  let score = current.score;
   let sizeLevel = current.sizeLevel;
   let districtIndex = current.districtIndex;
   let lives = current.lives;
   let lastAbsorbAt = current.lastAbsorbAt;
   let bestCombo = current.bestCombo;
   let bestMass = current.bestMass;
+  let bestScore = current.bestScore;
   let victory: boolean = current.victory;
   let gameOver: boolean = current.gameOver;
   let lastHeavyHitAt = current.lastHeavyHitAt;
   let absorbedCount = current.absorbedCount;
 
-  if (Date.now() - lastAbsorbAt > 1500) {
-    combo = 0;
-  }
+  if (Date.now() - lastAbsorbAt > 1500) combo = 0;
 
   for (const object of objects) {
     const def = OBJECT_TYPES[object.typeId];
     object.x += object.vx * dt;
     object.y += object.vy * dt;
-
     if (object.x < def.radius || object.x > ARENA_WIDTH - def.radius) object.vx *= -1;
     if (object.y < def.radius || object.y > ARENA_HEIGHT - def.radius) object.vy *= -1;
-
     object.x = clamp(object.x, def.radius, ARENA_WIDTH - def.radius);
     object.y = clamp(object.y, def.radius, ARENA_HEIGHT - def.radius);
 
@@ -132,10 +134,32 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
       combo = now - lastAbsorbAt < 1500 ? combo + 1 : 1;
       lastAbsorbAt = now;
       bestCombo = Math.max(bestCombo, combo);
-      const gainedMass = def.value + Math.max(0, combo - 1);
-      mass += gainedMass;
+
+      const effect = def.effect as ObjectEffect;
+      const massGain = effect === 'heal' ? 1 : def.value + Math.max(0, combo - 1);
+      const scoreGainBase = def.value * 12 + Math.max(0, combo - 1) * 9;
+      let scoreGain = scoreGainBase;
+      let healed = false;
+      let boostRefill = false;
+      let bonus = false;
+
+      if (effect === 'bonus') {
+        scoreGain += 40;
+        bonus = true;
+      }
+      if (effect === 'heal' && lives < START_LIVES) {
+        lives += 1;
+        healed = true;
+      }
+      if (effect === 'boost') {
+        boostRefill = true;
+      }
+
+      mass += massGain;
+      score += scoreGain;
       absorbedCount += 1;
       bestMass = Math.max(bestMass, mass);
+      bestScore = Math.max(bestScore, score);
 
       const previousLevel = sizeLevel;
       sizeLevel = getLevelByMass(mass);
@@ -150,15 +174,18 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
       }
 
       track.objectAbsorbed(def.label, combo);
-
       absorbed.push({
         objectId: object.id,
         label: def.label,
         combo,
         mass,
+        score,
         sizeUp: sizeLevel > previousLevel ? sizeLevel : undefined,
         districtUp: districtIndex > previousDistrict ? DISTRICTS[districtIndex].name : undefined,
         victory,
+        boostRefill,
+        healed,
+        bonus,
       });
 
       respawnObject(object, districtIndex, holeX, holeY);
@@ -183,7 +210,9 @@ export function stepSimulation(dtMs: number, movementX: number, movementY: numbe
   state.replace({
     ...current,
     mass,
+    score,
     bestMass,
+    bestScore,
     sizeLevel,
     districtIndex,
     combo,
@@ -208,22 +237,21 @@ export function restartRunPreservingMeta() {
   const nextState: GameState = {
     ...base,
     bestMass: Math.max(base.bestMass, current.bestMass, current.mass),
-    bestCombo: Math.max(base.bestCombo || 0, current.bestCombo),
+    bestScore: Math.max(base.bestScore, current.bestScore, current.score),
+    bestCombo: Math.max(base.bestCombo, current.bestCombo),
     sessionCount: current.sessionCount,
     totalPlayTime: current.totalPlayTime,
     firstSeen: current.firstSeen,
     lastSeen: current.lastSeen,
-  } as GameState;
+  };
   nextState.objects = createInitialObjects(nextState);
   state.replace(nextState);
 }
 
 function createInitialObjects(current: GameState): GameObject[] {
-  const district = current.districtIndex;
   const objects: GameObject[] = [];
   for (let i = 0; i < MAX_OBJECTS; i += 1) {
-    const object = createObject(district, current.holeX, current.holeY);
-    objects.push(object);
+    objects.push(createObject(current.districtIndex, current.holeX, current.holeY));
   }
   return objects;
 }
@@ -238,39 +266,22 @@ function createObject(districtIndex: number, holeX: number, holeY: number): Game
     x = randomRange(def.radius, ARENA_WIDTH - def.radius);
     y = randomRange(def.radius, ARENA_HEIGHT - def.radius);
   }
-  return {
-    id: nextObjectId++,
-    typeId,
-    x,
-    y,
-    vx: randomRange(-28, 28),
-    vy: randomRange(-28, 28),
-  };
+  return { id: nextObjectId++, typeId, x, y, vx: randomRange(-28, 28), vy: randomRange(-28, 28) };
 }
 
 function respawnObject(object: GameObject, districtIndex: number, holeX: number, holeY: number) {
-  const replacement = createObject(districtIndex, holeX, holeY);
-  object.id = replacement.id;
-  object.typeId = replacement.typeId;
-  object.x = replacement.x;
-  object.y = replacement.y;
-  object.vx = replacement.vx;
-  object.vy = replacement.vy;
+  Object.assign(object, createObject(districtIndex, holeX, holeY));
 }
 
 function getLevelByMass(mass: number): number {
   let level = 1;
-  for (const entry of SIZE_LEVELS) {
-    if (mass >= entry.minMass) level = entry.level;
-  }
+  for (const entry of SIZE_LEVELS) if (mass >= entry.minMass) level = entry.level;
   return level;
 }
 
 function getDistrictIndexByMass(mass: number): number {
   let district = 0;
-  for (const entry of DISTRICTS) {
-    if (mass >= entry.minMass) district = entry.id;
-  }
+  for (const entry of DISTRICTS) if (mass >= entry.minMass) district = entry.id;
   return district;
 }
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Чёрная дыра — v0.2</title>
+  <title>Чёрная дыра — v0.3</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { min-height: 100%; font-family: system-ui, sans-serif; background: radial-gradient(circle at top, rgba(64,99,255,.22), transparent 32%), linear-gradient(180deg, #0b1024 0%, #151d40 100%); color: #fff; }
@@ -53,6 +53,8 @@
     .obj { position:absolute; border-radius:999px; display:grid; place-items:center; background: radial-gradient(circle at top, var(--accent, rgba(255,255,255,.4)) 0%, transparent 70%), rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 10px 24px rgba(0,0,0,.18); }
     .obj.safe { outline: 2px solid rgba(141,229,125,.18); }
     .obj.danger { outline: 2px solid rgba(255,102,117,.18); }
+    .obj.pickup { box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 0 18px rgba(255,230,109,.18); }
+    .obj.boss { box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 0 26px rgba(77,171,247,.32); }
     .emoji { font-size:28px; }
     .board-status { position:absolute; left:50%; transform:translateX(-50%); top:18px; z-index:2; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
     .chip, .summary-chip, .tip-chip, .legend-chip { padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.07); font-size:13px; font-weight:700; }
@@ -93,6 +95,7 @@
     </div>
     <div class="hud">
       <div class="pill">⚫ Масса <strong id="mass">0</strong></div>
+      <div class="pill">✦ Счёт <strong id="score">0</strong></div>
       <div class="pill">🔥 Комбо <strong id="combo">0</strong></div>
       <div class="pill">🗺 Район <strong id="district">Двор</strong></div>
       <div class="pill">❤ Жизни <strong id="lives">3</strong></div>
@@ -112,7 +115,7 @@
     </div>
     <div class="bottom">
       <div class="card"><div class="title">Как работает toy</div>Мелкие объекты сами тянутся в радиус всасывания. Крупные — опасны, пока ты не вырос.</div>
-      <div class="card"><div class="title">Рекорд</div>Лучшая масса: <strong id="bestMass">0</strong> · Лучшее комбо: <strong id="bestCombo">0</strong></div>
+      <div class="card"><div class="title">Рекорд</div>Лучшая масса: <strong id="bestMass">0</strong> · Лучшее комбо: <strong id="bestCombo">0</strong> · Лучший счёт: <strong id="bestScore">0</strong></div>
       <div class="card"><div class="title">Финал</div>Финальная цель — дорасти до автобуса и проглотить его без потери всех жизней.</div>
     </div>
   </div>
@@ -129,13 +132,16 @@
 
   <script>
     const OBJECT_TYPES = {
-      coin:{ id:'coin', label:'Монета', emoji:'🪙', tier:1, radius:16, value:2, color:'#ffd166' },
-      crate:{ id:'crate', label:'Коробка', emoji:'📦', tier:1, radius:20, value:4, color:'#f0b36b' },
-      cone:{ id:'cone', label:'Конус', emoji:'🚧', tier:2, radius:20, value:5, color:'#ff9f43' },
-      scooter:{ id:'scooter', label:'Скутер', emoji:'🛴', tier:2, radius:24, value:8, color:'#7bdff2' },
-      car:{ id:'car', label:'Авто', emoji:'🚗', tier:3, radius:34, value:16, color:'#ff6b6b' },
-      taxi:{ id:'taxi', label:'Такси', emoji:'🚕', tier:4, radius:42, value:24, color:'#ffe066' },
-      bus:{ id:'bus', label:'Автобус', emoji:'🚌', tier:5, radius:54, value:40, color:'#4dabf7' }
+      coin:{ id:'coin', label:'Монета', emoji:'🪙', tier:1, radius:16, value:2, color:'#ffd166', effect:'none' },
+      crate:{ id:'crate', label:'Коробка', emoji:'📦', tier:1, radius:20, value:4, color:'#f0b36b', effect:'none' },
+      star:{ id:'star', label:'Звезда', emoji:'⭐', tier:1, radius:18, value:6, color:'#ffe66d', effect:'bonus' },
+      heart:{ id:'heart', label:'Сердце', emoji:'❤️', tier:1, radius:18, value:1, color:'#ff7b89', effect:'heal' },
+      cone:{ id:'cone', label:'Конус', emoji:'🚧', tier:2, radius:20, value:5, color:'#ff9f43', effect:'none' },
+      scooter:{ id:'scooter', label:'Скутер', emoji:'🛴', tier:2, radius:24, value:8, color:'#7bdff2', effect:'none' },
+      core:{ id:'core', label:'Ядро рывка', emoji:'🌀', tier:2, radius:20, value:4, color:'#7aa2ff', effect:'boost' },
+      car:{ id:'car', label:'Авто', emoji:'🚗', tier:3, radius:34, value:16, color:'#ff6b6b', effect:'none' },
+      taxi:{ id:'taxi', label:'Такси', emoji:'🚕', tier:4, radius:42, value:24, color:'#ffe066', effect:'none' },
+      bus:{ id:'bus', label:'Автобус', emoji:'🚌', tier:5, radius:54, value:40, color:'#4dabf7', effect:'none' }
     };
     const SIZE_LEVELS = [
       { level:1, minMass:0, radius:28 },
@@ -167,7 +173,7 @@
     let boostCooldownUntil = 0;
 
     function createInitialState() {
-      const state = { mass:0, bestMass:0, sizeLevel:1, holeX:ARENA_WIDTH/2, holeY:ARENA_HEIGHT/2, objects:[], combo:0, bestCombo:0, lastAbsorbAt:0, districtIndex:0, absorbedCount:0, lives:START_LIVES, gameOver:false, victory:false, lastHeavyHitAt:0 };
+      const state = { mass:0, score:0, bestMass:0, bestScore:0, sizeLevel:1, holeX:ARENA_WIDTH/2, holeY:ARENA_HEIGHT/2, objects:[], combo:0, bestCombo:0, lastAbsorbAt:0, districtIndex:0, absorbedCount:0, lives:START_LIVES, gameOver:false, victory:false, lastHeavyHitAt:0 };
       state.objects = createInitialObjects(state);
       return state;
     }
@@ -238,9 +244,17 @@
           state.combo=now-state.lastAbsorbAt<1500?state.combo+1:1;
           state.lastAbsorbAt=now;
           state.bestCombo=Math.max(state.bestCombo,state.combo);
-          state.mass+=def.value+Math.max(0,state.combo-1);
+          const effect = def.effect || 'none';
+          const massGain = effect === 'heal' ? 1 : def.value + Math.max(0,state.combo-1);
+          let scoreGain = def.value * 12 + Math.max(0,state.combo-1) * 9;
+          if (effect === 'bonus') scoreGain += 40;
+          if (effect === 'heal' && state.lives < START_LIVES) { state.lives += 1; showToast('Сердце восстановило 1 жизнь.', 'success'); }
+          if (effect === 'boost') { boostCooldownUntil = 0; showToast('Ядро рывка! Перезарядка сброшена.', 'info'); }
+          state.mass += massGain;
+          state.score += scoreGain;
           state.absorbedCount+=1;
           state.bestMass=Math.max(state.bestMass,state.mass);
+          state.bestScore=Math.max(state.bestScore,state.score);
           const prevLevel=state.sizeLevel, prevDistrict=state.districtIndex;
           state.sizeLevel=levelByMass(state.mass); state.districtIndex=districtByMass(state.mass);
           if(def.id==='bus'&&state.mass>=TARGET_MASS_TO_WIN) state.victory=true;
@@ -265,7 +279,7 @@
 
     function render(){
       const district=currentDistrict(); const radius=holeRadius(); const progress=progressToNext(); const boostActive=Date.now()<boostActiveUntil;
-      document.getElementById('mass').textContent=Math.floor(state.mass); document.getElementById('combo').textContent=state.combo; document.getElementById('district').textContent=district.name; document.getElementById('lives').textContent=state.lives; document.getElementById('bestMass').textContent=Math.floor(state.bestMass); document.getElementById('bestCombo').textContent=state.bestCombo;
+      document.getElementById('mass').textContent=Math.floor(state.mass); document.getElementById('score').textContent=Math.floor(state.score); document.getElementById('combo').textContent=state.combo; document.getElementById('district').textContent=district.name; document.getElementById('lives').textContent=state.lives; document.getElementById('bestMass').textContent=Math.floor(state.bestMass); document.getElementById('bestCombo').textContent=state.bestCombo; document.getElementById('bestScore').textContent=Math.floor(state.bestScore);
       const scene=document.getElementById('scene'); scene.className=`scene district-${district.id} ${boostActive?'boosting':''}`;
       document.getElementById('districtPanel').innerHTML=`<div class="panel-label">Район</div><div class="panel-title">${district.name}</div><div class="panel-text">${district.goal}</div><div class="panel-subtext">Сначала ешь всё безопасное, потом переходи на более крупные цели.</div>`;
       document.getElementById('targetPanel').innerHTML=`<div class="panel-label">Цель роста</div><div class="panel-title">${currentGoalText()}</div><div class="target-progress">${progress.next ? `${Math.floor(progress.current)} / ${progress.next}` : 'цель достигнута'}</div><div class="target-bar"><div class="target-bar-fill" style="width:${progress.ratio*100}%"></div></div><div class="target-foot">Финальная цель — автобус. Слишком крупные объекты опасны, пока размер не позволяет их съесть.</div>`;
@@ -283,11 +297,11 @@
       document.getElementById('boardStatus').innerHTML=Array.from(map.entries()).map(([typeId,count])=>{ const def=OBJECT_TYPES[typeId]; return `<span class="summary-chip ${def.tier<=state.sizeLevel?'edible':'danger'}">${def.emoji} ×${count}</span>`; }).join('');
 
       document.querySelectorAll('.obj').forEach(n=>n.remove());
-      for(const object of state.objects){ const def=OBJECT_TYPES[object.typeId]; const node=document.createElement('div'); node.className=`obj ${def.tier<=state.sizeLevel?'safe':'danger'}`; node.style.width=`${def.radius*2}px`; node.style.height=`${def.radius*2}px`; node.style.left=`${object.x-def.radius}px`; node.style.top=`${object.y-def.radius}px`; node.style.setProperty('--accent', def.color+'55'); node.innerHTML=`<span class="emoji">${def.emoji}</span>`; arena.appendChild(node); }
+      for(const object of state.objects){ const def=OBJECT_TYPES[object.typeId]; const node=document.createElement('div'); node.className=`obj ${def.tier<=state.sizeLevel?'safe':'danger'} ${def.effect !== 'none' ? 'pickup' : ''} ${def.id==='bus' ? 'boss' : ''}`; node.style.width=`${def.radius*2}px`; node.style.height=`${def.radius*2}px`; node.style.left=`${object.x-def.radius}px`; node.style.top=`${object.y-def.radius}px`; node.style.setProperty('--accent', def.color+'55'); node.innerHTML=`<span class="emoji">${def.emoji}</span>`; arena.appendChild(node); }
 
       document.getElementById('overlayTitle').textContent=state.victory?'Район поглощён':'Чёрная дыра схлопнулась';
       document.getElementById('overlayText').textContent=state.victory?'Ты вырос до размеров автобуса и подчинил себе весь район.':'Ты столкнулся с объектами, которые были слишком велики для текущего размера.';
-      document.getElementById('overlayStats').innerHTML=`<span>Масса: <strong>${Math.floor(state.mass)}</strong></span><span>Лучшее комбо: <strong>${state.bestCombo}</strong></span><span>Поглощено объектов: <strong>${state.absorbedCount}</strong></span>`;
+      document.getElementById('overlayStats').innerHTML=`<span>Масса: <strong>${Math.floor(state.mass)}</strong></span><span>Счёт: <strong>${Math.floor(state.score)}</strong></span><span>Лучшее комбо: <strong>${state.bestCombo}</strong></span><span>Поглощено объектов: <strong>${state.absorbedCount}</strong></span>`;
       document.getElementById('overlay').classList.toggle('show', state.gameOver||state.victory);
       renderToast();
     }
