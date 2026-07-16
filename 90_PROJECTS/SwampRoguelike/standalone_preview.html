@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ancient Slavic Action Roguelike Engine</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background-color: #050805; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; background-color: #050805; touch-action: none; }
+        #controls {
+            position: absolute; bottom: 20px; left: 20px; z-index: 100;
+            display: grid; grid-template-columns: repeat(3, 52px); grid-gap: 6px; opacity: 0.85;
+        }
+        .btn {
+            width: 52px; height: 52px; background: rgba(20, 30, 20, 0.85); border: 2px solid #3b523b;
+            color: #d1d5db; font-weight: bold; font-size: 20px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; user-select: none; cursor: pointer;
+        }
+        .btn:active { background: #3b523b; color: #fff; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- On-screen Touch D-Pad for Mobile Preview -->
+    <div id="controls">
+        <div></div><div class="btn" id="btnW">W</div><div></div>
+        <div class="btn" id="btnA">A</div><div class="btn" id="btnS">S</div><div class="btn" id="btnD">D</div>
+    </div>
+
+    <script>
+    // --- 1. VECTOR2 ---
+    class Vector2 {
+        constructor(x = 0, y = 0) { this.x = x; this.y = y; }
+        set(x, y) { this.x = x; this.y = y; return this; }
+        add(v) { this.x += v.x; this.y += v.y; return this; }
+        scale(s) { this.x *= s; this.y *= s; return this; }
+        length() { return Math.hypot(this.x, this.y); }
+    }
+
+    // --- 2. NOISE ---
+    class SimplexNoise {
+        constructor(seed = 1337) {
+            this.p = new Uint8Array(256);
+            this.perm = new Uint8Array(512);
+            for (let i = 0; i < 256; i++) this.p[i] = i;
+            let s = seed % 2147483647;
+            if (s <= 0) s += 2147483646;
+            for (let i = 255; i > 0; i--) {
+                s = (s * 16807) % 2147483647;
+                const r = s % (i + 1);
+                const temp = this.p[i]; this.p[i] = this.p[r]; this.p[r] = temp;
+            }
+            for (let i = 0; i < 512; i++) this.perm[i] = this.p[i & 255];
+        }
+        noise2D(x, y) {
+            const F2 = 0.5 * (Math.sqrt(3.0) - 1.0);
+            const G2 = (3.0 - Math.sqrt(3.0)) / 6.0;
+            let s = (x + y) * F2;
+            let i = Math.floor(x + s), j = Math.floor(y + s);
+            let t = (i + j) * G2;
+            let x0 = x - (i - t), y0 = y - (j - t);
+            let i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
+            let x1 = x0 - i1 + G2, y1 = y0 - j1 + G2;
+            let x2 = x0 - 1.0 + 2.0 * G2, y2 = y0 - 1.0 + 2.0 * G2;
+            let ii = i & 255, jj = j & 255;
+            let t0 = 0.5 - x0*x0 - y0*y0, n0 = 0;
+            if (t0 > 0) { t0 *= t0; n0 = t0 * t0 * (this.perm[ii + this.perm[jj]] % 2 === 0 ? x0 + y0 : x0 - y0); }
+            let t1 = 0.5 - x1*x1 - y1*y1, n1 = 0;
+            if (t1 > 0) { t1 *= t1; n1 = t1 * t1 * (this.perm[ii + i1 + this.perm[jj + j1]] % 2 === 0 ? x1 + y1 : x1 - y1); }
+            let t2 = 0.5 - x2*x2 - y2*y2, n2 = 0;
+            if (t2 > 0) { t2 *= t2; n2 = t2 * t2 * (this.perm[ii + 1 + this.perm[jj + 1]] % 2 === 0 ? x2 + y2 : x2 - y2); }
+            return 32.0 * (n0 + n1 + n2);
+        }
+    }
+
+    // --- 3. INPUT HANDLER ---
+    class InputHandler {
+        constructor() {
+            this.keys = {};
+            this.debugKeys = { f1: true, f2: true, f3: false };
+
+            window.addEventListener('keydown', (e) => {
+                this.keys[e.code] = true;
+                if (e.code === 'F1') this.debugKeys.f1 = !this.debugKeys.f1;
+                if (e.code === 'F2') this.debugKeys.f2 = !this.debugKeys.f2;
+                if (e.code === 'F3') this.debugKeys.f3 = !this.debugKeys.f3;
+            });
+            window.addEventListener('keyup', (e) => { this.keys[e.code] = false; });
+
+            // On-Screen Buttons
+            ['W', 'A', 'S', 'D'].forEach(k => {
+                const el = document.getElementById('btn' + k);
+                if (el) {
+                    const code = 'Key' + k;
+                    const press = (e) => { e.preventDefault(); this.keys[code] = true; };
+                    const release = (e) => { e.preventDefault(); this.keys[code] = false; };
+                    el.addEventListener('touchstart', press);
+                    el.addEventListener('touchend', release);
+                    el.addEventListener('mousedown', press);
+                    el.addEventListener('mouseup', release);
+                }
+            });
+        }
+        getMovementVector() {
+            let x = 0, y = 0;
+            if (this.keys['KeyW'] || this.keys['ArrowUp']) y -= 1;
+            if (this.keys['KeyS'] || this.keys['ArrowDown']) y += 1;
+            if (this.keys['KeyA'] || this.keys['ArrowLeft']) x -= 1;
+            if (this.keys['KeyD'] || this.keys['ArrowRight']) x += 1;
+            if (x !== 0 && y !== 0) { const len = Math.hypot(x, y); x /= len; y /= len; }
+            return { x, y };
+        }
+    }
+
+    // --- 4. CAMERA ---
+    class Camera {
+        constructor(w, h) {
+            this.position = new Vector2(0, 0);
+            this.viewportSize = new Vector2(w, h);
+            this.target = null;
+            this.zoom = 1.0;
+        }
+        resize(w, h) { this.viewportSize.set(w, h); }
+        setTarget(target) { this.target = target; }
+        update() {
+            if (this.target) {
+                this.position.x += (this.target.position.x - this.position.x) * 0.12;
+                this.position.y += (this.target.position.y - this.position.y) * 0.12;
+            }
+        }
+        worldToScreen(wx, wy) {
+            return {
+                x: (wx - this.position.x) * this.zoom + this.viewportSize.x / 2,
+                y: (wy - this.position.y) * this.zoom + this.viewportSize.y / 2
+            };
+        }
+        getVisibleBounds() {
+            const hw = (this.viewportSize.x / 2) / this.zoom;
+            const hh = (this.viewportSize.y / 2) / this.zoom;
+            return { minX: this.position.x - hw, maxX: this.position.x + hw, minY: this.position.y - hh, maxY: this.position.y + hh };
+        }
+    }
+
+    // --- 5. ASSET MANAGER ---
+    class AssetManager {
+        constructor() {
+            this.assets = new Map();
+            this.manifest = {
+                player: 'assets/sprites/1784135845972-019f66c7-b076-7811-9e3f-ad947049df17.png',
+                tiles: {
+                    moss: 'assets/sprites/1784063748840-019f627c-0b37-7fbb-97fa-922de3e45ebc.png',
+                    mud: 'assets/sprites/1784180938147-019f6976-8969-73e8-8699-5ad39f8b5233.jpeg',
+                    swamp: 'assets/sprites/1784188674960-019f69ee-8233-7500-b88b-a6e23f0b9573.jpeg',
+                    toxic_water: 'assets/sprites/1784188824060-019f69f0-c58c-75a7-a71f-315bafae0489.jpeg'
+                },
+                trees: ['assets/sprites/1784190120790-019f6a03-c5a1-74ac-b779-0081338693b0.png'],
+                rocks: ['assets/sprites/1784190489413-019f6a0a-436a-7951-b28a-099f316d7fb3.jpeg']
+            };
+            this.preloadAssets();
+        }
+        preloadAssets() {
+            const load = (id, url) => {
+                if (!url) return;
+                const img = new Image();
+                img.onload = () => this.assets.set(id, img);
+                img.src = url;
+            };
+            load('player', this.manifest.player);
+            for (const [k, v] of Object.entries(this.manifest.tiles)) load('tile_' + k, v);
+            this.manifest.trees.forEach((v, i) => load('tree_' + i, v));
+            this.manifest.rocks.forEach((v, i) => load('rock_' + i, v));
+        }
+        getAsset(id) { return this.assets.get(id); }
+    }
+
+    // --- 6. CHUNK & WORLD ---
+    class Chunk {
+        static CHUNK_SIZE = 32;
+        static TILE_SIZE = 64;
+        constructor(cx, cy, noise) {
+            this.chunkX = cx; this.chunkY = cy;
+            this.tiles = []; this.objects = [];
+            this.generate(noise);
+        }
+        generate(noise) {
+            const cs = Chunk.CHUNK_SIZE, ts = Chunk.TILE_SIZE;
+            const wx0 = this.chunkX * cs, wy0 = this.chunkY * cs;
+            for (let ly = 0; ly < cs; ly++) {
+                for (let lx = 0; lx < cs; lx++) {
+                    const wx = wx0 + lx, wy = wy0 + ly;
+                    const e = noise.noise2D(wx * 0.04, wy * 0.04);
+                    let type = 'moss';
+                    if (e < -0.35) type = 'toxic_water';
+                    else if (e < -0.15) type = 'swamp';
+                    else if (e > 0.3) type = 'mud';
+
+                    this.tiles.push({ type, wx: wx * ts, wy: wy * ts });
+
+                    if (type !== 'toxic_water' && (lx % 3 === 0) && (ly % 3 === 0)) {
+                        const objN = noise.noise2D(wx * 0.2 + 100, wy * 0.2 + 100);
+                        const posX = (wx + 0.5) * ts, posY = (wy + 0.5) * ts;
+                        if (objN > 0.4) {
+                            this.objects.push({ type: 'tree', x: posX, y: posY, w: 120, h: 180, col: { ox: -25, oy: 35, w: 50, h: 35 } });
+                        } else if (objN < -0.5) {
+                            this.objects.push({ type: 'rock', x: posX, y: posY, w: 80, h: 80, col: { ox: -30, oy: -10, w: 60, h: 45 } });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    class World {
+        constructor() {
+            this.noise = new SimplexNoise(1337);
+            this.chunks = new Map();
+        }
+        getChunk(cx, cy) {
+            const key = cx + ',' + cy;
+            if (!this.chunks.has(key)) this.chunks.set(key, new Chunk(cx, cy, this.noise));
+            return this.chunks.get(key);
+        }
+        update(px, py) {
+            const csPix = Chunk.CHUNK_SIZE * Chunk.TILE_SIZE;
+            const pcx = Math.floor(px / csPix), pcy = Math.floor(py / csPix);
+            for (let cy = pcy - 1; cy <= pcy + 1; cy++) {
+                for (let cx = pcx - 1; cx <= pcx + 1; cx++) {
+                    this.getChunk(cx, cy);
+                }
+            }
+        }
+        getNearbyObstacles(px, py) {
+            const obstacles = [];
+            for (const chunk of this.chunks.values()) {
+                for (const obj of chunk.objects) {
+                    if (Math.hypot(obj.x - px, obj.y - py) < 200) obstacles.push(obj);
+                }
+            }
+            return obstacles;
+        }
+    }
+
+    // --- 7. PLAYER ---
+    class Player {
+        constructor() {
+            this.position = new Vector2(0, 0);
+            this.velocity = new Vector2(0, 0);
+            this.col = { ox: -18, oy: 5, w: 36, h: 22 };
+            this.facing = 'down';
+        }
+        handleInput(input) {
+            const m = input.getMovementVector();
+            if (m.x !== 0 || m.y !== 0) {
+                this.velocity.x += m.x * 1200 * (1/60);
+                this.velocity.y += m.y * 1200 * (1/60);
+                const spd = Math.hypot(this.velocity.x, this.velocity.y);
+                if (spd > 260) { this.velocity.x = (this.velocity.x / spd) * 260; this.velocity.y = (this.velocity.y / spd) * 260; }
+                if (Math.abs(m.x) > Math.abs(m.y)) this.facing = m.x > 0 ? 'right' : 'left';
+                else this.facing = m.y > 0 ? 'down' : 'up';
+            }
+        }
+        update(dt, world) {
+            this.velocity.x *= 0.86; this.velocity.y *= 0.86;
+            this.position.x += this.velocity.x * dt;
+            let obs = world.getNearbyObstacles(this.position.x, this.position.y);
+            for (const o of obs) {
+                if (this.intersects(o)) { this.position.x -= this.velocity.x * dt; this.velocity.x = 0; break; }
+            }
+            this.position.y += this.velocity.y * dt;
+            obs = world.getNearbyObstacles(this.position.x, this.position.y);
+            for (const o of obs) {
+                if (this.intersects(o)) { this.position.y -= this.velocity.y * dt; this.velocity.y = 0; break; }
+            }
+        }
+        intersects(o) {
+            const ax = this.position.x + this.col.ox, ay = this.position.y + this.col.oy;
+            const bx = o.x + o.col.ox, by = o.y + o.col.oy;
+            return ax < bx + o.col.w && ax + this.col.w > bx && ay < by + o.col.h && ay + this.col.h > by;
+        }
+        draw(ctx, camera, assets) {
+            const sp = camera.worldToScreen(this.position.x, this.position.y);
+            const img = assets.getAsset('player');
+            if (img) {
+                ctx.save();
+                if (this.facing === 'left') { ctx.translate(sp.x, sp.y); ctx.scale(-1, 1); ctx.drawImage(img, -48, -100, 96, 128); }
+                else ctx.drawImage(img, sp.x - 48, sp.y - 100, 96, 128);
+                ctx.restore();
+            } else {
+                // Styled Fallback Warrior
+                ctx.fillStyle = '#b45309'; ctx.beginPath(); ctx.arc(sp.x, sp.y, 22, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#f59e0b'; ctx.fillRect(sp.x - 8, sp.y - 8, 16, 16);
+            }
+        }
+    }
+
+    // --- 8. GAME ENGINE LOOP ---
+    class Game {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+
+            this.input = new InputHandler();
+            this.camera = new Camera(this.canvas.width, this.canvas.height);
+            this.assets = new AssetManager();
+            this.world = new World();
+            this.player = new Player();
+            this.camera.setTarget(this.player);
+
+            this.lastTime = performance.now();
+            this.fps = 60;
+            requestAnimationFrame((t) => this.loop(t));
+        }
+        resize() {
+            this.canvas.width = window.innerWidth || 800;
+            this.canvas.height = window.innerHeight || 600;
+            if (this.camera) this.camera.resize(this.canvas.width, this.canvas.height);
+        }
+        loop(now) {
+            const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+            this.lastTime = now;
+            this.fps = Math.round(1 / (dt || 0.016));
+
+            // Update
+            this.player.handleInput(this.input);
+            this.player.update(dt, this.world);
+            this.world.update(this.player.position.x, this.player.position.y);
+            this.camera.update();
+
+            // Render
+            this.render();
+            requestAnimationFrame((t) => this.loop(t));
+        }
+        render() {
+            const ctx = this.ctx, cam = this.camera, bounds = cam.getVisibleBounds();
+
+            // Background
+            ctx.fillStyle = '#0a120a'; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // 1. Terrain Layer
+            for (const chunk of this.world.chunks.values()) {
+                for (const tile of chunk.tiles) {
+                    if (tile.wx + 64 < bounds.minX || tile.wx > bounds.maxX || tile.wy + 64 < bounds.minY || tile.wy > bounds.maxY) continue;
+                    const sp = cam.worldToScreen(tile.wx, tile.wy);
+                    const img = this.assets.getAsset('tile_' + tile.type);
+                    if (img) {
+                        ctx.drawImage(img, sp.x, sp.y, 65, 65);
+                    } else {
+                        if (tile.type === 'toxic_water') ctx.fillStyle = '#064e3b';
+                        else if (tile.type === 'swamp') ctx.fillStyle = '#143818';
+                        else if (tile.type === 'mud') ctx.fillStyle = '#271c12';
+                        else ctx.fillStyle = '#142a14';
+                        ctx.fillRect(sp.x, sp.y, 65, 65);
+                    }
+                }
+            }
+
+            // 2. Objects & Player Y-Sorted
+            const list = [];
+            for (const chunk of this.world.chunks.values()) {
+                for (const o of chunk.objects) {
+                    list.push({ y: o.y, draw: () => {
+                        const sp = cam.worldToScreen(o.x, o.y);
+                        const img = this.assets.getAsset(o.type + '_0');
+                        if (img) {
+                            ctx.drawImage(img, sp.x - o.w/2, sp.y - o.h + 20, o.w, o.h);
+                        } else {
+                            ctx.fillStyle = o.type === 'tree' ? '#15803d' : '#4b5563';
+                            ctx.fillRect(sp.x - o.w/4, sp.y - o.h/2, o.w/2, o.h/2);
+                        }
+                        if (this.input.debugKeys.f3) {
+                            ctx.strokeStyle = '#ef4444'; ctx.strokeRect(sp.x + o.col.ox, sp.y + o.col.oy, o.col.w, o.col.h);
+                        }
+                    }});
+                }
+            }
+            list.push({ y: this.player.position.y, draw: () => {
+                this.player.draw(ctx, cam, this.assets);
+                if (this.input.debugKeys.f3) {
+                    const sp = cam.worldToScreen(this.player.position.x, this.player.position.y);
+                    ctx.strokeStyle = '#22c55e'; ctx.strokeRect(sp.x + this.player.col.ox, sp.y + this.player.col.oy, this.player.col.w, this.player.col.h);
+                }
+            }});
+            list.sort((a,b) => a.y - b.y);
+            for (const item of list) item.draw();
+
+            // 3. UI & Debug Overlay
+            if (this.input.debugKeys.f1) {
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10, 10, 110, 32);
+                ctx.fillStyle = '#22c55e'; ctx.font = 'bold 14px monospace';
+                ctx.fillText('FPS: ' + this.fps, 20, 31);
+            }
+            if (this.input.debugKeys.f2) {
+                ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(10, 48, 240, 36);
+                ctx.fillStyle = '#3b82f6'; ctx.font = '12px monospace';
+                ctx.fillText('World X: ' + Math.round(this.player.position.x) + ' | Y: ' + Math.round(this.player.position.y), 20, 70);
+            }
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { new Game(); });
+    window.addEventListener('load', () => { new Game(); });
+    </script>
+</body>
+</html>

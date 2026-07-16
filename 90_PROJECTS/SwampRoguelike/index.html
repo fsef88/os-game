@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swamp Roguelike - Stage 2: Seamless Ground + Camera</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #hud {
+            position: absolute; top: 10px; right: 10px; z-index: 100;
+            background: rgba(0,0,0,0.75); color: #d1d5db; font: 12px monospace;
+            padding: 10px 14px; border-radius: 6px; line-height: 1.6; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud">WASD / arrows: move camera focus<br>Mouse wheel: zoom<br>F1: FPS &nbsp; F2: AutoTile debug</div>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>
