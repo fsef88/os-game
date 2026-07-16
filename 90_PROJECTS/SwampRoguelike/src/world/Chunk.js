@@ -66,12 +66,15 @@ export class Chunk {
             return AutoTiler.TILE_TYPES.MOSS;
         };
 
-        // 2. Autotile calculation
+        // 2. Autotile calculation + shore detection (land tile bordering any water tile)
         for (let ly = 0; ly < chunkSize; ly++) {
             for (let lx = 0; lx < chunkSize; lx++) {
                 const tile = this.tiles[ly * chunkSize + lx];
                 const neighbors = AutoTiler.getNeighborMask(this.tiles, lx, ly, getTileType);
                 tile.bitmask = AutoTiler.calculateBitmask(neighbors, tile.type);
+
+                tile.nearWater = !AutoTiler.isWater(tile.type) &&
+                    Object.values(neighbors).some(AutoTiler.isWater);
             }
         }
 

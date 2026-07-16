@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Swamp Roguelike - Atmosphere Scene (20x20)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        canvas { display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <canvas id="scene" width="1200" height="1200"></canvas>
+    <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const TILE = 60;
+    const GRID = 20;
+    const WORLD = TILE * GRID; // 1200
+
+    const SPRITE = 'assets/sprites/';
+    const DECOR = SPRITE + 'decor/';
+
+    const CACHE_BUST = Date.now();
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('Failed to load ' + src));
+            img.src = src + '?v=' + CACHE_BUST;
+        });
+    }
+
+    const manifest = {
+        ground: SPRITE + 'ground_forest_dark.png',
+        player: SPRITE + 'player_warrior.png',
+        tree_ancient_face: DECOR + 'tree_ancient_face.png',
+        tree_birch_leafy: DECOR + 'tree_birch_leafy.png',
+        tree_gnarled_mushroom: DECOR + 'tree_gnarled_mushroom.png',
+        rock_boulder: DECOR + 'rock_boulder.png',
+        mushroom_cluster: DECOR + 'mushroom_cluster.png',
+        mushroom_glow: DECOR + 'mushroom_glow.png',
+        bones: DECOR + 'bones.png',
+        skull: DECOR + 'skull.png',
+        branch: DECOR + 'branch.png',
+        grass_tuft: DECOR + 'grass_tuft.png',
+        moss_bush: DECOR + 'moss_bush.png',
+    };
+
+    // Hand-placed scene layout. Each entry: sprite key, world position (px), target draw width (px, height follows aspect ratio).
+    const placements = [
+        // Trees (8) - ring around the clearing, varied scale for depth
+        { key: 'tree_ancient_face', x: 190, y: 190, w: 260 },
+        { key: 'tree_birch_leafy', x: 970, y: 160, w: 140 },
+        { key: 'tree_gnarled_mushroom', x: 110, y: 660, w: 150 },
+        { key: 'tree_birch_leafy', x: 1090, y: 470, w: 130 },
+        { key: 'tree_ancient_face', x: 880, y: 1010, w: 210 },
+        { key: 'tree_gnarled_mushroom', x: 300, y: 1040, w: 160 },
+        { key: 'tree_birch_leafy', x: 55, y: 370, w: 110 },
+        { key: 'tree_ancient_face', x: 1130, y: 760, w: 150 },
+
+        // Rocks (4)
+        { key: 'rock_boulder', x: 360, y: 300, w: 130 },
+        { key: 'rock_boulder', x: 860, y: 300, w: 100 },
+        { key: 'rock_boulder', x: 250, y: 900, w: 100 },
+        { key: 'rock_boulder', x: 950, y: 860, w: 115 },
+
+        // Small decor: mushrooms / bones / branches / grass (9)
+        { key: 'mushroom_cluster', x: 450, y: 480, w: 90 },
+        { key: 'mushroom_glow', x: 760, y: 660, w: 80 },
+        { key: 'bones', x: 500, y: 800, w: 85 },
+        { key: 'skull', x: 700, y: 250, w: 65 },
+        { key: 'branch', x: 350, y: 760, w: 90 },
+        { key: 'grass_tuft', x: 610, y: 900, w: 95 },
+        { key: 'moss_bush', x: 900, y: 560, w: 100 },
+        { key: 'grass_tuft', x: 250, y: 510, w: 85 },
+        { key: 'mushroom_cluster', x: 1000, y: 660, w: 80 },
+    ];
+
+    const PLAYER_X = 600, PLAYER_Y = 600;
+
+    async function main() {
+        const entries = Object.entries(manifest);
+        const loaded = {};
+        await Promise.all(entries.map(async ([key, src]) => {
+            loaded[key] = await loadImage(src);
+            console.log('[loaded]', key, loaded[key].naturalWidth + 'x' + loaded[key].naturalHeight);
+        }));
+
+        render(loaded);
+    }
+
+    function drawGround(ground) {
+        const tex = ground.naturalWidth; // seamless tileable texture
+        for (let y = 0; y < WORLD; y += tex) {
+            for (let x = 0; x < WORLD; x += tex) {
+                ctx.drawImage(ground, x, y, tex, tex);
+            }
+        }
+    }
+
+    function drawSprite(img, cx, cy, targetW) {
+        const scale = targetW / img.naturalWidth;
+        const targetH = img.naturalHeight * scale;
+        // anchor at bottom-center (base of object sits at cx,cy)
+        ctx.drawImage(img, cx - targetW / 2, cy - targetH, targetW, targetH);
+        return targetH;
+    }
+
+    function render(loaded) {
+        ctx.imageSmoothingEnabled = true;
+
+        // 1. Ground layer
+        drawGround(loaded.ground);
+
+        // 2. Build draw list (props + player), y-sorted by baseline for correct overlap
+        const drawList = placements.map(p => ({ ...p, baseline: p.y }));
+        drawList.push({ key: 'player', x: PLAYER_X, y: PLAYER_Y, w: 110, baseline: PLAYER_Y });
+        drawList.sort((a, b) => a.baseline - b.baseline);
+
+        for (const item of drawList) {
+            const img = loaded[item.key];
+            drawSprite(img, item.x, item.y, item.w);
+        }
+
+        // 3. Atmosphere: vignette + soft fog toward the top (depth cue)
+        const vignette = ctx.createRadialGradient(
+            WORLD / 2, WORLD / 2, WORLD * 0.28,
+            WORLD / 2, WORLD / 2, WORLD * 0.72
+        );
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(0,0,0,0.72)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, WORLD, WORLD);
+
+        const fog = ctx.createLinearGradient(0, 0, 0, WORLD * 0.5);
+        fog.addColorStop(0, 'rgba(140,160,150,0.20)');
+        fog.addColorStop(1, 'rgba(140,160,150,0)');
+        ctx.fillStyle = fog;
+        ctx.fillRect(0, 0, WORLD, WORLD * 0.5);
+
+        // subtle overall cool-dark color grade
+        ctx.fillStyle = 'rgba(5,15,10,0.15)';
+        ctx.fillRect(0, 0, WORLD, WORLD);
+
+        console.log('[scene] render complete');
+    }
+
+    main().catch(err => console.error('[scene] failed:', err));
+    </script>
+</body>
+</html>

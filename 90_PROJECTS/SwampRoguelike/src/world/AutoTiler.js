@@ -8,6 +8,15 @@ export class AutoTiler {
         STONE: 'stone'
     };
 
+    static WATER_TYPES = new Set([
+        AutoTiler.TILE_TYPES.SWAMP,
+        AutoTiler.TILE_TYPES.TOXIC_WATER
+    ]);
+
+    static isWater(type) {
+        return AutoTiler.WATER_TYPES.has(type);
+    }
+
     /**
      * Determines autotiling tile variant based on 8 neighboring tiles:
      * N, S, E, W, NE, NW, SE, SW

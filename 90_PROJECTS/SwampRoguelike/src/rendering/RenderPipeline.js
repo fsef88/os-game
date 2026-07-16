@@ -1,3 +1,5 @@
+import { AutoTiler } from '../world/AutoTiler.js';
+
 export class RenderPipeline {
     constructor(canvas, ctx) {
         this.canvas = canvas;
@@ -32,16 +34,29 @@ export class RenderPipeline {
         }
     }
 
+    // Picks the real texture for a tile based on its AutoTiler-classified type,
+    // and whether it borders water (shore transition band).
+    pickTexture(tile, assetManager) {
+        if (tile.type === AutoTiler.TILE_TYPES.TOXIC_WATER) {
+            return assetManager.getAsset('tile_toxic_water');
+        }
+        if (tile.type === AutoTiler.TILE_TYPES.SWAMP) {
+            return assetManager.getAsset('tile_swamp_water');
+        }
+        if (tile.nearWater) {
+            return assetManager.getAsset('tile_shore_transition');
+        }
+        if (tile.type === AutoTiler.TILE_TYPES.MUD) {
+            return assetManager.getAsset('tile_mud_ground');
+        }
+        // MOSS / DIRT / STONE fall back to the verified Stage 1/2 ground texture -
+        // distinct art for those is Stage 4 scope (rocks/decoration pass).
+        return assetManager.getAsset('tile_ground_moss');
+    }
+
     renderGroundLayer(world, camera, assetManager, bounds) {
         const ctx = this.ctx;
         const tileSize = 64;
-
-        // Real ground texture verified in Stage 1: seamless swamp/moss ground, 2048x2048.
-        const groundTexture = assetManager.getAsset('tile_ground_moss');
-
-        if (!groundTexture) return; // No fallback fill/color - only real pixels are drawn.
-
-        const texSize = groundTexture.naturalWidth; // 2048, an exact multiple of tileSize
 
         for (const chunk of world.chunks.values()) {
             for (const tile of chunk.tiles) {
@@ -50,33 +65,40 @@ export class RenderPipeline {
                     continue;
                 }
 
-                const sp = camera.worldToScreen(tile.worldX, tile.worldY);
-                const drawSize = tileSize * camera.zoom + 1; // +1 seam preventer for subpixel gaps
+                const texture = this.pickTexture(tile, assetManager);
+                if (!texture) continue; // No fallback fill/color - only real pixels are drawn.
 
-                // The source texture (2048x2048) repeats every texSize world-pixels. A plain
-                // wrap would leave a hard seam every repeat because the image's own edges
-                // don't match. Mirroring alternate blocks (like GL_MIRRORED_REPEAT) makes
-                // every block boundary share the same edge pixels, so the real texture tiles
-                // with no visible seam at any zoom/pan, using only real sampled pixels.
-                const blockX = Math.floor(tile.worldX / texSize);
-                const blockY = Math.floor(tile.worldY / texSize);
-                const localX = tile.worldX - blockX * texSize;
-                const localY = tile.worldY - blockY * texSize;
-                const mirrorX = (((blockX % 2) + 2) % 2) === 1;
-                const mirrorY = (((blockY % 2) + 2) % 2) === 1;
-                const sx = mirrorX ? (texSize - tileSize - localX) : localX;
-                const sy = mirrorY ? (texSize - tileSize - localY) : localY;
-
-                if (!mirrorX && !mirrorY) {
-                    ctx.drawImage(groundTexture, sx, sy, tileSize, tileSize, sp.x, sp.y, drawSize, drawSize);
-                } else {
-                    ctx.save();
-                    ctx.translate(sp.x + drawSize / 2, sp.y + drawSize / 2);
-                    ctx.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
-                    ctx.drawImage(groundTexture, sx, sy, tileSize, tileSize, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
-                    ctx.restore();
-                }
+                this.drawSeamlessTile(ctx, texture, tile.worldX, tile.worldY, tileSize, camera);
             }
+        }
+    }
+
+    // Samples a real, non-squished tileSize x tileSize crop of `texture` for the given
+    // world tile, using mirrored-repeat wrapping (like GL_MIRRORED_REPEAT) so the texture
+    // - which wasn't authored as a seamless tile - still repeats with no visible seam at
+    // any pan/zoom. Requires texture dimensions to be an exact multiple of tileSize.
+    drawSeamlessTile(ctx, texture, worldX, worldY, tileSize, camera) {
+        const texSize = texture.naturalWidth;
+        const sp = camera.worldToScreen(worldX, worldY);
+        const drawSize = tileSize * camera.zoom + 1; // +1 seam preventer for subpixel gaps
+
+        const blockX = Math.floor(worldX / texSize);
+        const blockY = Math.floor(worldY / texSize);
+        const localX = worldX - blockX * texSize;
+        const localY = worldY - blockY * texSize;
+        const mirrorX = (((blockX % 2) + 2) % 2) === 1;
+        const mirrorY = (((blockY % 2) + 2) % 2) === 1;
+        const sx = mirrorX ? (texSize - tileSize - localX) : localX;
+        const sy = mirrorY ? (texSize - tileSize - localY) : localY;
+
+        if (!mirrorX && !mirrorY) {
+            ctx.drawImage(texture, sx, sy, tileSize, tileSize, sp.x, sp.y, drawSize, drawSize);
+        } else {
+            ctx.save();
+            ctx.translate(sp.x + drawSize / 2, sp.y + drawSize / 2);
+            ctx.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
+            ctx.drawImage(texture, sx, sy, tileSize, tileSize, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+            ctx.restore();
         }
     }
 
@@ -99,8 +121,8 @@ export class RenderPipeline {
             const lx = ((tx % chunkSize) + chunkSize) % chunkSize;
             const ly = ((ty % chunkSize) + chunkSize) % chunkSize;
             const tile = chunk.tiles[ly * chunkSize + lx];
-            ctx.fillText('AutoTile type: ' + tile.type + '  bitmask: ' + tile.bitmask, 20, 84);
+            ctx.fillText('type: ' + tile.type + '  bitmask: ' + tile.bitmask + '  nearWater: ' + tile.nearWater, 20, 84);
         }
-        ctx.fillText('(F2 debug: proves AutoTiler runs; Stage 3 adds real', 20, 98);
+        ctx.fillText('(F2: AutoTile-driven texture selection, Stage 3)', 20, 98);
     }
 }
