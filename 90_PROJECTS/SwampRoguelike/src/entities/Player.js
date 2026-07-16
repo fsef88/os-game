@@ -89,28 +89,24 @@ export class Player extends Entity {
     }
 
     draw(ctx, camera, assetManager) {
-        const screenPos = camera.worldToScreen(this.position.x, this.position.y);
+        // No verified real player sprite yet (Stage 5 scope adds animated character art).
+        // Intentionally draw nothing rather than a placeholder shape - the player
+        // remains a controllable camera-focus point until real art is wired in.
         const playerImg = assetManager.getAsset('player');
+        if (!playerImg) return;
 
+        const screenPos = camera.worldToScreen(this.position.x, this.position.y);
         const drawW = 96 * camera.zoom;
         const drawH = 128 * camera.zoom;
 
-        if (playerImg) {
-            ctx.save();
-            if (this.facingDirection === 'left') {
-                ctx.translate(screenPos.x, screenPos.y);
-                ctx.scale(-1, 1);
-                ctx.drawImage(playerImg, -drawW / 2, -drawH + 20, drawW, drawH);
-            } else {
-                ctx.drawImage(playerImg, screenPos.x - drawW / 2, screenPos.y - drawH + 20, drawW, drawH);
-            }
-            ctx.restore();
+        ctx.save();
+        if (this.facingDirection === 'left') {
+            ctx.translate(screenPos.x, screenPos.y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(playerImg, -drawW / 2, -drawH + 20, drawW, drawH);
         } else {
-            // Fallback hero marker
-            ctx.fillStyle = '#d97706';
-            ctx.beginPath();
-            ctx.arc(screenPos.x, screenPos.y, 20 * camera.zoom, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.drawImage(playerImg, screenPos.x - drawW / 2, screenPos.y - drawH + 20, drawW, drawH);
         }
+        ctx.restore();
     }
 }

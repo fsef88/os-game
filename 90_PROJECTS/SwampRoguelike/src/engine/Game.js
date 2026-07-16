@@ -84,7 +84,8 @@ export class Game {
         // Update world chunks around player
         this.world.update(this.player.position.x, this.player.position.y);
 
-        // Update camera position
+        // Update camera position & zoom (mouse wheel controlled, Stage 2 scaling)
+        this.camera.setZoom(this.input.zoom);
         this.camera.update(dt);
     }
 

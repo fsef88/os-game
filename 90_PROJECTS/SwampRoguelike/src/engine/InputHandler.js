@@ -6,6 +6,15 @@ export class InputHandler {
             f2: false,
             f3: false
         };
+        this.zoom = 1.0;
+        this.minZoom = 0.5;
+        this.maxZoom = 3.0;
+
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = Math.exp(-e.deltaY * 0.001);
+            this.zoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoom * factor));
+        }, { passive: false });
 
         window.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;

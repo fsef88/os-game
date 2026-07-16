@@ -2,80 +2,20 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Asset Test - Real Ground Tile 5x5 Grid</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Swamp Roguelike - Stage 2: Seamless Ground + Camera</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
-        #canvas { display: block; width: 100vw; height: 100vh; }
+        #hud {
+            position: absolute; top: 10px; right: 10px; z-index: 100;
+            background: rgba(0,0,0,0.75); color: #d1d5db; font: 12px monospace;
+            padding: 10px 14px; border-radius: 6px; line-height: 1.6; pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-
-    <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
-    function resize() {
-        canvas.width = window.innerWidth || 800;
-        canvas.height = window.innerHeight || 600;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    // 1. Exact Target File Path
-    // NOTE: the originally-wired file here (...922de3e45ebc.png, "tile_moss") is actually
-    // a character portrait, not a ground tile. Verified by visual inspection.
-    // This path points at the file that is actually a real, seamless swamp/moss ground
-    // texture (2048x2048 JPEG): "tile_ground_moss" in assets.json.
-    const targetPath = 'assets/sprites/1784180938147-019f6976-8969-73e8-8699-5ad39f8b5233.jpeg';
-
-    // 2. Load the image
-    const img = new Image();
-
-    img.onload = () => {
-        // 3. Log exact file path and resolution
-        const info = `SUCCESS LOADED REAL GROUND TILE:\nPath: ${targetPath}\nResolution: ${img.naturalWidth}x${img.naturalHeight} px`;
-        console.log(info);
-
-        // 4. Render 5x5 Grid ONLY using ctx.drawImage (No fillRect, no gradients, no fallback colors)
-        const gridCols = 5;
-        const gridRows = 5;
-        const tileWidth = canvas.width / gridCols;
-        const tileHeight = canvas.height / gridRows;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (let r = 0; r < gridRows; r++) {
-            for (let c = 0; c < gridCols; c++) {
-                const x = c * tileWidth;
-                const y = r * tileHeight;
-                ctx.drawImage(img, x, y, tileWidth, tileHeight);
-            }
-        }
-
-        // Draw HUD overlay text with image details
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(15, 15, 520, 90);
-        ctx.fillStyle = '#22c55e';
-        ctx.font = 'bold 16px monospace';
-        ctx.fillText('✓ REAL GROUND TILE VERIFICATION (5x5 GRID)', 30, 42);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = '13px monospace';
-        ctx.fillText('File: ' + targetPath, 30, 65);
-        ctx.fillText('Size: ' + img.naturalWidth + ' x ' + img.naturalHeight + ' px', 30, 85);
-    };
-
-    img.onerror = (err) => {
-        const errMsg = 'ERROR: FAILED TO LOAD IMAGE AT ' + targetPath;
-        console.error(errMsg, err);
-        ctx.fillStyle = '#ff0000';
-        ctx.font = 'bold 20px monospace';
-        ctx.fillText(errMsg, 30, 50);
-    };
-
-    img.src = targetPath;
-    </script>
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud">WASD / arrows: move camera focus<br>Mouse wheel: zoom<br>F1: FPS &nbsp; F2: AutoTile debug</div>
+    <script type="module" src="src/main.js"></script>
 </body>
 </html>

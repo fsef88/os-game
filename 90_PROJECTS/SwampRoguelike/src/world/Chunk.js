@@ -2,7 +2,7 @@ import { AutoTiler } from './AutoTiler.js';
 
 export class Chunk {
     static CHUNK_SIZE = 32; // 32x32 tiles
-    static TILE_SIZE = 64;  # 64x64 pixels
+    static TILE_SIZE = 64;  // 64x64 pixels
 
     constructor(chunkX, chunkY, noise) {
         this.chunkX = chunkX;
@@ -75,60 +75,8 @@ export class Chunk {
             }
         }
 
-        // 3. Procedurally populate large objects (Trees, Rocks) and small decorations
-        for (let ly = 0; ly < chunkSize; ly += 2) {
-            for (let lx = 0; lx < chunkSize; lx += 2) {
-                const wx = worldStartX + lx;
-                const wy = worldStartY + ly;
-                const tile = this.tiles[ly * chunkSize + lx];
-
-                // Skip placing solid objects in deep toxic water
-                if (tile.type === AutoTiler.TILE_TYPES.TOXIC_WATER) continue;
-
-                const objNoise = noise.noise2D(wx * 0.2 + 200, wy * 0.2 + 200);
-                const decNoise = noise.noise2D(wx * 0.4 + 300, wy * 0.4 + 300);
-
-                const posX = (wx + 0.5) * tileSize;
-                const posY = (wy + 0.5) * tileSize;
-
-                if (objNoise > 0.55) {
-                    // Place Tree obstacle
-                    const treeVariant = Math.abs(Math.floor(objNoise * 10)) % 4;
-                    this.objects.push({
-                        type: 'tree',
-                        variant: treeVariant,
-                        x: posX,
-                        y: posY,
-                        width: 120,
-                        height: 180,
-                        collision: { offsetX: -30, offsetY: 40, width: 60, height: 40 }
-                    });
-                } else if (objNoise < -0.6) {
-                    // Place Rock obstacle
-                    const rockVariant = Math.abs(Math.floor(objNoise * 10)) % 2;
-                    this.objects.push({
-                        type: 'rock',
-                        variant: rockVariant,
-                        x: posX,
-                        y: posY,
-                        width: 90,
-                        height: 90,
-                        collision: { offsetX: -35, offsetY: -10, width: 70, height: 50 }
-                    });
-                } else if (decNoise > 0.45) {
-                    // Place Small Decoration (grass tufts, mushrooms, roots)
-                    const decVariant = Math.abs(Math.floor(decNoise * 10)) % 2;
-                    this.objects.push({
-                        type: 'decoration',
-                        variant: decVariant,
-                        x: posX,
-                        y: posY,
-                        width: 64,
-                        height: 64,
-                        collision: null
-                    });
-                }
-            }
-        }
+        // Object population (trees, rocks, decorations) is Stage 4 scope -
+        // it needs real cropped sprites that haven't been extracted/verified yet.
+        // this.objects stays empty until then.
     }
 }

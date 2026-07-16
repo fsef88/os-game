@@ -17,7 +17,16 @@ export class AssetManager {
     }
 
     async loadTestAssets() {
-        const entries = Object.entries(this.testManifest);
+        return this._loadEntries(Object.entries(this.testManifest));
+    }
+
+    async loadManifest(path) {
+        const response = await fetch(path);
+        const manifest = await response.json();
+        return this._loadEntries(Object.entries(manifest.test_assets || {}));
+    }
+
+    async _loadEntries(entries) {
         this.totalCount = entries.length;
         this.loadedCount = 0;
 
@@ -27,7 +36,7 @@ export class AssetManager {
                 img.onload = () => {
                     this.assets.set(id, img);
                     this.loadedCount++;
-                    console.log(`[AssetManager] Loaded test asset [${this.loadedCount}/${this.totalCount}]: ${id}`);
+                    console.log(`[AssetManager] Loaded [${this.loadedCount}/${this.totalCount}]: ${id}`);
                     resolve(true);
                 };
                 img.onerror = () => {
@@ -40,7 +49,7 @@ export class AssetManager {
 
         await Promise.all(promises);
         this.isReady = true;
-        console.log(`[AssetManager] Stage 1 complete! Total loaded: ${this.assets.size}/${this.totalCount}`);
+        console.log(`[AssetManager] Loaded ${this.assets.size}/${this.totalCount} assets.`);
         return this.isReady;
     }
 
