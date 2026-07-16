@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Славянские Выжившие: Богатырь против Лешего — Vertical Slice</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b1024; font-family: system-ui, sans-serif; color: #fff; }
+    #app { width: 100%; height: 100%; position: relative; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .screen { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(15,20,29,0.92) 0%, rgba(11,16,36,0.98) 100%); padding: 24px; text-align: center; }
+    h1 { font-size: 48px; color: #f5c76c; margin-bottom: 12px; text-shadow: 0 4px 16px rgba(0,0,0,0.8); }
+    .subtitle { font-size: 20px; max-width: 680px; opacity: 0.85; line-height: 1.5; margin-bottom: 36px; }
+    .btn { background: linear-gradient(180deg, #f5c76c 0%, #e5a94b 100%); color: #1f1600; border: none; border-radius: 18px; padding: 18px 48px; font-size: 22px; font-weight: 900; cursor: pointer; box-shadow: 0 12px 28px rgba(0,0,0,0.4); transition: transform 0.12s; }
+    .btn:hover { transform: scale(1.05); }
+    #levelup-modal { position: absolute; inset: 0; z-index: 60; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); padding: 24px; }
+    .levelup-title { font-size: 38px; color: #f5c76c; margin-bottom: 24px; }
+    .cards-grid { display: flex; gap: 20px; max-width: 1000px; justify-content: center; flex-wrap: wrap; }
+    .upgrade-card { background: rgba(25, 33, 54, 0.95); border: 2px solid #f5c76c; border-radius: 20px; padding: 24px; width: 280px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.15s, border-color 0.15s; }
+    .upgrade-card:hover { transform: translateY(-8px); border-color: #ffffff; }
+    .card-icon { font-size: 54px; margin-bottom: 14px; }
+    .card-title { font-size: 22px; font-weight: bold; color: #f5c76c; margin-bottom: 8px; }
+    .card-subtitle { font-size: 14px; color: #ff7a3d; margin-bottom: 12px; }
+    .card-desc { font-size: 14px; opacity: 0.85; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="menu-screen" class="screen">
+      <h1>СЛАВЯНСКИЕ ВЫЖИВШИЕ</h1>
+      <div class="subtitle">Легендарный Богатырь один против бесконечных полчищ искривлённого леса и владыки Лешего. Используйте WASD/Стрелки для движения. Атаки автоматические!</div>
+      <button id="start-btn" class="btn">В БОЙ ЗА РОДНУЮ ЗЕМЛЮ!</button>
+    </div>
+
+    <div id="levelup-modal">
+      <div class="levelup-title">⭐ НОВЫЙ УРОВЕНЬ! ВЫБЕРИТЕ ДАР БОГОВ:</div>
+      <div id="levelup-cards" class="cards-grid"></div>
+    </div>
+
+    <div id="game-over-screen" class="screen" style="display: none;">
+      <h1 style="color: #d9383a;">ГИБЕЛЬ БОГАТЫРЯ</h1>
+      <div class="subtitle" id="game-over-stats" style="margin-bottom: 28px; font-size: 22px;"></div>
+      <button class="btn restart-btn">ВОЗРОДИТЬСЯ И ОТОМСТИТЬ</button>
+    </div>
+
+    <div id="victory-screen" class="screen" style="display: none;">
+      <h1 style="color: #58d86a;">ПОБЕДА БОГАТЫРЯ!</h1>
+      <div class="subtitle" id="victory-stats" style="margin-bottom: 28px; font-size: 22px;"></div>
+      <button class="btn restart-btn">НОВАЯ БИТВА</button>
+    </div>
+  </div>
+
+  <script>
+    const ASSET_PATHS = {
+      player: '../../assets/sprites/gpt-image-1_a_Create_a_complete_2D.png',
+      leshy: '../../assets/sprites/gpt-image-1_a_Dark_Slavic_fantasy_.png',
+      wolf: '../../assets/sprites/1784065312413-019f6293-e29a-7a39-bb7b-02b2cfdc7913.png',
+      undead: '../../assets/sprites/1784065777149-019f629a-7007-7561-af44-e68716809c05.png',
+      forestCreature: '../../assets/sprites/1784065933094-019f629d-0ce5-7a57-ba0c-f43ee349d34e.png',
+      background: '../../assets/sprites/1784064346558-019f6284-1cd8-74a8-b2ce-45b6dd5eac08.png'
+    };
+    const FALLBACK_PATHS = {
+      player: './assets/sprites/gpt-image-1_a_Create_a_complete_2D.png',
+      leshy: './assets/sprites/gpt-image-1_a_Dark_Slavic_fantasy_.png',
+      wolf: './assets/sprites/1784065312413-019f6293-e29a-7a39-bb7b-02b2cfdc7913.png',
+      undead: './assets/sprites/1784065777149-019f629a-7007-7561-af44-e68716809c05.png',
+      forestCreature: './assets/sprites/1784065933094-019f629d-0ce5-7a57-ba0c-f43ee349d34e.png',
+      background: './assets/sprites/1784064346558-019f6284-1cd8-74a8-b2ce-45b6dd5eac08.png'
+    };
+
+    const loadedImages = {};
+    function loadImage(key) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          const fImg = new Image();
+          fImg.onload = () => resolve(fImg);
+          fImg.onerror = () => {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 128;
+            const cx = c.getContext('2d');
+            cx.fillStyle = '#1e2430'; cx.fillRect(0,0,128,128);
+            cx.strokeStyle = '#f5c76c'; cx.lineWidth = 4; cx.strokeRect(4,4,120,120);
+            cx.fillStyle = '#ffffff'; cx.font = 'bold 16px sans-serif'; cx.textAlign = 'center';
+            cx.fillText(key, 64, 68);
+            const resImg = new Image(); resImg.src = c.toDataURL();
+            resolve(resImg);
+          };
+          fImg.src = FALLBACK_PATHS[key];
+        };
+        img.src = ASSET_PATHS[key];
+      });
+    }
+
+    class SoundEngine {
+      constructor() { this.ctx = null; }
+      init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      playSlash() {
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.12);
+        } catch {}
+      }
+      playHit() {
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+          osc.type = 'square'; osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+          osc.frequency.linearRampToValueAtTime(50, this.ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.4, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.15);
+        } catch {}
+      }
+      playGemPickup() {
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+          osc.type = 'sine'; osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+        } catch {}
+      }
+      playLevelUp() {
+        try {
+          this.init(); if (!this.ctx) return;
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+            gain.gain.setValueAtTime(0.3, this.ctx.currentTime + idx * 0.08);
+            gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.08 + 0.25);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.08); osc.stop(this.ctx.currentTime + idx * 0.08 + 0.25);
+          });
+        } catch {}
+      }
+      playBossRoar() {
+        try {
+          this.init(); if (!this.ctx) return;
+          const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+          osc.frequency.linearRampToValueAtTime(45, this.ctx.currentTime + 0.8);
+          gain.gain.setValueAtTime(0.6, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(); osc.stop(this.ctx.currentTime + 0.8);
+        } catch {}
+      }
+    }
+    const sounds = new SoundEngine();
+
+    let gameState = 'MENU', gameTimer = 0, waveNumber = 1, bossSpawned = false, totalKills = 0;
+    let screenShakeTimer = 0, screenShakeIntensity = 0;
+    const particles = [], floatingTexts = [], enemies = [], expGems = [];
+    let textIdCounter = 1, enemyIdCounter = 1, gemIdCounter = 1;
+
+    let player = {
+      pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, radius: 28,
+      maxHp: 150, hp: 150, speed: 210, level: 1, exp: 0, expToNext: 10,
+      attackDamage: 35, attackCooldown: 0.65, attackTimer: 0, attackRange: 85,
+      pickupRange: 110, invulnerableTimer: 0, facing: 'right', animTimer: 0,
+      hasFlameRing: false, flameAngle: 0, hasLightning: false, lightningTimer: 0,
+      hasWhirlwind: false, whirlwindAngle: 0, vampireDrain: 0
+    };
+
+    const ALL_UPGRADES = [
+      { id: 'svarog_flame', title: 'Огонь Сварога', subtitle: 'Священный круговой огонь', description: 'Вращающееся огненное кольцо вокруг богатыря (+20 урон).', icon: '🔥', apply: p => { p.hasFlameRing = true; p.attackDamage += 10; } },
+      { id: 'perun_lightning', title: 'Молния Перуна', subtitle: 'Гнев небесных гроз', description: 'Поражает случайных врагов молнией с небес.', icon: '⚡', apply: p => { p.hasLightning = true; p.attackDamage += 15; } },
+      { id: 'whirlwind_cleave', title: 'Вихрь Секиры', subtitle: 'Широкий взмах', description: 'Постоянный вихревой удар вокруг богатыря (+35 к радиусу).', icon: '🪓', apply: p => { p.hasWhirlwind = true; p.attackRange += 35; } },
+      { id: 'bogatyr_vitality', title: 'Богатырское Здоровье', subtitle: 'Мощь родной земли', description: 'Увеличивает запас здоровья на +50 и исцеляет.', icon: '❤️', apply: p => { p.maxHp += 50; p.hp = p.maxHp; } },
+      { id: 'swift_boots', title: 'Сапоги-Скороходы', subtitle: 'Скорость ветра', description: 'Повышает скорость передвижения и сбор опыта.', icon: '👢', apply: p => { p.speed += 55; p.pickupRange += 60; } },
+      { id: 'vampire_drain', title: 'Жажда Живой Воды', subtitle: 'Поглощение сил', description: 'Каждый убитый монстр восстанавливает +2 ХП.', icon: '🩸', apply: p => { p.vampireDrain += 2; } }
+    ];
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.getElementById('app').appendChild(canvas);
+    function resize() { canvas.width = window.innerWidth || 1280; canvas.height = window.innerHeight || 720; }
+    window.addEventListener('resize', resize); resize();
+
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code==='KeyB' && gameState==='PLAYING') triggerBossSpawn(); });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    function triggerShake(duration, intensity) { screenShakeTimer = duration; screenShakeIntensity = intensity; }
+    function spawnFloatingText(pos, text, color='#fff') { floatingTexts.push({ id: textIdCounter++, pos: { x: pos.x+(Math.random()-0.5)*20, y: pos.y-15 }, text, color, alpha: 1, life: 0.8, velY: -45 }); }
+    function spawnHitParticles(pos, count=6) {
+      for(let i=0;i<count;i++){
+        const angle=Math.random()*Math.PI*2, speed=60+Math.random()*120;
+        particles.push({ pos:{x:pos.x,y:pos.y}, vel:{x:Math.cos(angle)*speed,y:Math.sin(angle)*speed}, color:Math.random()>0.5?'#d9383a':'#ff7a3d', size:3+Math.random()*4, alpha:1, life:0.3+Math.random()*0.3, maxLife:0.6 });
+      }
+    }
+    function spawnDeathParticles(pos, color='#58d86a', count=18) {
+      for(let i=0;i<count;i++){
+        const angle=Math.random()*Math.PI*2, speed=40+Math.random()*160;
+        particles.push({ pos:{x:pos.x,y:pos.y}, vel:{x:Math.cos(angle)*speed,y:Math.sin(angle)*speed}, color:Math.random()>0.4?color:'#a2ff86', size:4+Math.random()*6, alpha:1, life:0.5+Math.random()*0.4, maxLife:0.9 });
+      }
+    }
+
+    function startGame() {
+      player = { pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, radius: 28, maxHp: 150, hp: 150, speed: 210, level: 1, exp: 0, expToNext: 10, attackDamage: 35, attackCooldown: 0.65, attackTimer: 0, attackRange: 85, pickupRange: 110, invulnerableTimer: 0, facing: 'right', animTimer: 0, hasFlameRing: false, flameAngle: 0, hasLightning: false, lightningTimer: 0, hasWhirlwind: false, whirlwindAngle: 0, vampireDrain: 0 };
+      enemies.length = 0; expGems.length = 0; particles.length = 0; floatingTexts.length = 0;
+      gameTimer = 0; waveNumber = 1; bossSpawned = false; totalKills = 0;
+      gameState = 'PLAYING';
+      document.getElementById('menu-screen').style.display = 'none';
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.getElementById('victory-screen').style.display = 'none';
+      document.getElementById('levelup-modal').style.display = 'none';
+    }
+
+    function triggerBossSpawn() {
+      if(bossSpawned) return; bossSpawned = true;
+      const angle=Math.random()*Math.PI*2, dist=850;
+      spawnEnemy('leshy_boss', { x: player.pos.x+Math.cos(angle)*dist, y: player.pos.y+Math.sin(angle)*dist }, false);
+    }
+
+    function spawnEnemy(type, pos, isElite=false) {
+      let radius=22, maxHp=45, speed=135, damage=12, expValue=2;
+      if(type==='wolf') { radius=20; maxHp=30; speed=175; damage=10; expValue=2; }
+      else if(type==='undead') { radius=24; maxHp=70; speed=100; damage=18; expValue=3; }
+      else if(type==='forest_creature') { radius=23; maxHp=50; speed=125; damage=14; expValue=2; }
+      else if(type==='leshy_boss') { radius=55; maxHp=1800; speed=85; damage=35; expValue=50; }
+      if(isElite) { radius*=1.3; maxHp*=3.5; damage*=1.6; expValue*=5; speed*=0.9; }
+      enemies.push({ id: enemyIdCounter++, type, pos:{x:pos.x, y:pos.y}, radius, maxHp, hp:maxHp, speed, damage, expValue, isElite, isBoss: type==='leshy_boss', facing:'left', animTimer:Math.random()*10, hitFlashTimer:0, bossPhase: type==='leshy_boss'?1:undefined, specialAttackTimer: type==='leshy_boss'?4.0:undefined });
+      if(type==='leshy_boss') { sounds.playBossRoar(); triggerShake(0.5, 12); }
+    }
+
+    function killEnemy(e) {
+      const idx = enemies.indexOf(e); if(idx!==-1) enemies.splice(idx,1);
+      totalKills++;
+      spawnDeathParticles(e.pos, e.isBoss?'#d9383a':'#58d86a', e.isBoss?50:15);
+      expGems.push({ id: gemIdCounter++, pos:{x:e.pos.x, y:e.pos.y}, value:e.expValue, radius:10 });
+      if(player.vampireDrain>0 && player.hp<player.maxHp) player.hp = Math.min(player.maxHp, player.hp+player.vampireDrain);
+      if(e.isBoss) {
+        gameState = 'VICTORY';
+        document.getElementById('victory-stats').innerHTML = `<div>Владыка Леший сокрушён!</div><div>Итоговый уровень: <b>${player.level}</b></div><div>Уничтожено монстров: <b>${totalKills}</b></div>`;
+        document.getElementById('victory-screen').style.display = 'flex';
+      }
+    }
+
+    let lastTime = performance.now(), spawnTimer = 0;
+    function loop(now) {
+      const dt = Math.min(0.1, (now-lastTime)/1000);
+      lastTime = now;
+
+      if(gameState === 'PLAYING') {
+        gameTimer += dt; spawnTimer -= dt;
+        waveNumber = Math.floor(gameTimer/30)+1;
+        if(gameTimer>=150 && !bossSpawned) triggerBossSpawn();
+        if(spawnTimer<=0 && enemies.length<160 && !bossSpawned) {
+          spawnTimer = Math.max(0.25, 1.2 - waveNumber*0.1);
+          const angle=Math.random()*Math.PI*2, dist=700;
+          const types=['wolf','forest_creature','undead'];
+          spawnEnemy(types[Math.floor(Math.random()*types.length)], { x:player.pos.x+Math.cos(angle)*dist, y:player.pos.y+Math.sin(angle)*dist }, Math.random()<0.08+waveNumber*0.02);
+        }
+
+        if(screenShakeTimer>0) screenShakeTimer -= dt;
+        for(let i=particles.length-1; i>=0; i--) { const p=particles[i]; p.pos.x+=p.vel.x*dt; p.pos.y+=p.vel.y*dt; p.life-=dt; p.alpha=Math.max(0, p.life/p.maxLife); if(p.life<=0) particles.splice(i,1); }
+        for(let i=floatingTexts.length-1; i>=0; i--) { const t=floatingTexts[i]; t.pos.y+=t.velY*dt; t.life-=dt; t.alpha=Math.max(0, t.life/0.8); if(t.life<=0) floatingTexts.splice(i,1); }
+
+        let dx=0, dy=0;
+        if(keys['KeyW']||keys['ArrowUp']) dy-=1;
+        if(keys['KeyS']||keys['ArrowDown']) dy+=1;
+        if(keys['KeyA']||keys['ArrowLeft']) dx-=1;
+        if(keys['KeyD']||keys['ArrowRight']) dx+=1;
+        const len=Math.hypot(dx,dy);
+        if(len>0) { dx/=len; dy/=len; player.pos.x+=dx*player.speed*dt; player.pos.y+=dy*player.speed*dt; player.facing=dx<0?'left':'right'; player.animTimer+=dt*8; }
+        else player.animTimer+=dt*2;
+
+        if(player.invulnerableTimer>0) player.invulnerableTimer-=dt;
+        if(player.hasFlameRing) player.flameAngle+=dt*3.5;
+        if(player.hasWhirlwind) player.whirlwindAngle+=dt*6.0;
+
+        if(player.hasLightning && enemies.length>0) {
+          player.lightningTimer-=dt;
+          if(player.lightningTimer<=0) {
+            player.lightningTimer=2.2; const tgt=enemies[Math.floor(Math.random()*enemies.length)];
+            if(tgt) {
+              tgt.hp-=player.attackDamage*2.5; tgt.hitFlashTimer=0.2; spawnHitParticles(tgt.pos, 12); spawnFloatingText(tgt.pos, `${Math.round(player.attackDamage*2.5)}`, '#66d9ff');
+              triggerShake(0.15, 6); if(tgt.hp<=0) killEnemy(tgt);
+            }
+          }
+        }
+
+        player.attackTimer-=dt;
+        if(player.attackTimer<=0 && enemies.length>0) {
+          player.attackTimer = player.attackCooldown;
+          sounds.playSlash(); let hits=0;
+          for(let i=enemies.length-1; i>=0; i--) {
+            const e=enemies[i]; if(Math.hypot(e.pos.x-player.pos.x, e.pos.y-player.pos.y)<=player.attackRange+e.radius) {
+              e.hp-=player.attackDamage; e.hitFlashTimer=0.15; spawnHitParticles(e.pos, 5); spawnFloatingText(e.pos, `${Math.round(player.attackDamage)}`, '#fff'); hits++;
+              if(e.hp<=0) killEnemy(e);
+            }
+          }
+          if(hits>0) triggerShake(0.08, 3);
+        }
+
+        if(player.hasFlameRing || player.hasWhirlwind) {
+          for(let i=enemies.length-1; i>=0; i--) {
+            const e=enemies[i], dist=Math.hypot(e.pos.x-player.pos.x, e.pos.y-player.pos.y);
+            if(player.hasFlameRing && dist<player.radius+65 && Math.random()<dt*4) { e.hp-=player.attackDamage*0.6; e.hitFlashTimer=0.1; spawnFloatingText(e.pos, `${Math.round(player.attackDamage*0.6)}`, '#ff7a3d'); if(e.hp<=0) killEnemy(e); }
+            if(player.hasWhirlwind && dist<player.attackRange && Math.random()<dt*5) { e.hp-=player.attackDamage*0.4; e.hitFlashTimer=0.1; if(e.hp<=0) killEnemy(e); }
+          }
+        }
+
+        for(let i=expGems.length-1; i>=0; i--) {
+          const g=expGems[i], dist=Math.hypot(g.pos.x-player.pos.x, g.pos.y-player.pos.y);
+          if(dist<player.pickupRange) { const ang=Math.atan2(player.pos.y-g.pos.y, player.pos.x-g.pos.x); g.pos.x+=Math.cos(ang)*450*dt; g.pos.y+=Math.sin(ang)*450*dt; }
+          if(dist<player.radius+g.radius) {
+            player.exp+=g.value; expGems.splice(i,1); sounds.playGemPickup();
+            if(player.exp>=player.expToNext) {
+              player.level++; player.exp-=player.expToNext; player.expToNext=Math.round(player.expToNext*1.35);
+              gameState = 'LEVEL_UP'; sounds.playLevelUp();
+              const modal=document.getElementById('levelup-modal'), cont=document.getElementById('levelup-cards');
+              cont.innerHTML='';
+              ALL_UPGRADES.sort(()=>0.5-Math.random()).slice(0,3).forEach(up => {
+                const card=document.createElement('div'); card.className='upgrade-card';
+                card.innerHTML=`<div class="card-icon">${up.icon}</div><div class="card-title">${up.title}</div><div class="card-subtitle">${up.subtitle}</div><div class="card-desc">${up.description}</div>`;
+                card.onclick=()=>{ up.apply(player); modal.style.display='none'; gameState='PLAYING'; };
+                cont.appendChild(card);
+              });
+              modal.style.display='flex';
+            }
+          }
+        }
+
+        for(let i=enemies.length-1; i>=0; i--) {
+          const e=enemies[i]; e.animTimer+=dt*5; if(e.hitFlashTimer>0) e.hitFlashTimer-=dt;
+          const ang=Math.atan2(player.pos.y-e.pos.y, player.pos.x-e.pos.x);
+          e.pos.x+=Math.cos(ang)*e.speed*dt; e.pos.y+=Math.sin(ang)*e.speed*dt; e.facing=Math.cos(ang)<0?'left':'right';
+          if(e.isBoss && e.specialAttackTimer!==undefined) {
+            e.specialAttackTimer-=dt;
+            if(e.hp<=e.maxHp*0.5 && e.bossPhase===1) { e.bossPhase=2; e.speed=135; e.damage=45; triggerShake(0.4,10); spawnFloatingText(e.pos,'ФАЗА 2: ГНЕВ ЛЕСА!','#d9383a'); sounds.playBossRoar(); }
+            if(e.specialAttackTimer<=0) { e.specialAttackTimer=e.bossPhase===2?3.0:5.0; spawnEnemy('wolf',{x:e.pos.x+80,y:e.pos.y}); spawnEnemy('forest_creature',{x:e.pos.x-80,y:e.pos.y}); triggerShake(0.2,8); }
+          }
+          if(Math.hypot(e.pos.x-player.pos.x, e.pos.y-player.pos.y)<player.radius+e.radius && player.invulnerableTimer<=0) {
+            player.hp-=e.damage; player.invulnerableTimer=0.65; triggerShake(0.25,7); sounds.playHit(); spawnHitParticles(player.pos,10); spawnFloatingText(player.pos,`-${Math.round(e.damage)}`, '#d9383a');
+          }
+        }
+
+        if(player.hp<=0) {
+          gameState = 'GAME_OVER';
+          document.getElementById('game-over-stats').innerHTML = `<div>Убито нечисти: <b>${totalKills}</b></div><div>Время в лесу: <b>${Math.floor(gameTimer/60)}м ${Math.floor(gameTimer%60)}с</b></div><div>Достигнут уровень: <b>${player.level} (Волна ${waveNumber})</b></div>`;
+          document.getElementById('game-over-screen').style.display = 'flex';
+        }
+      }
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      let camX=player.pos.x-canvas.width/2, camY=player.pos.y-canvas.height/2;
+      if(screenShakeIntensity>0 && screenShakeTimer>0) { camX+=(Math.random()-0.5)*screenShakeIntensity*2; camY+=(Math.random()-0.5)*screenShakeIntensity*2; }
+
+      ctx.save(); ctx.fillStyle='#0f141d'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      if(loadedImages.background) {
+        const bg=loadedImages.background, ts=600, sx=Math.floor(camX/ts)*ts, sy=Math.floor(camY/ts)*ts;
+        for(let x=sx;x<camX+canvas.width+ts;x+=ts) for(let y=sy;y<camY+canvas.height+ts;y+=ts) ctx.drawImage(bg,x-camX,y-camY,ts,ts);
+      }
+      ctx.restore();
+
+      for(const g of expGems) { ctx.save(); ctx.fillStyle='#66d9ff'; ctx.shadowColor='#66d9ff'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(g.pos.x-camX,g.pos.y-camY,g.radius,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+      if(player.hasFlameRing) { ctx.save(); ctx.strokeStyle='#ff7a3d'; ctx.lineWidth=4; ctx.setLineDash([15,10]); ctx.lineDashOffset=-player.flameAngle*20; ctx.beginPath(); ctx.arc(player.pos.x-camX,player.pos.y-camY,player.radius+65,0,Math.PI*2); ctx.stroke(); ctx.restore(); }
+
+      for(const e of enemies) {
+        ctx.save(); const ex=e.pos.x-camX, ey=e.pos.y-camY;
+        if(e.hitFlashTimer>0) ctx.filter='brightness(2.5) sepia(1)';
+        let img=loadedImages.wolf; if(e.type==='undead') img=loadedImages.undead; if(e.type==='forest_creature') img=loadedImages.forestCreature; if(e.type==='leshy_boss') img=loadedImages.leshy;
+        if(img) { ctx.translate(ex,ey); if(e.facing==='left') ctx.scale(-1,1); ctx.drawImage(img,-e.radius,-e.radius+Math.sin(e.animTimer)*4,e.radius*2,e.radius*2); }
+        else { ctx.fillStyle=e.isBoss?'#d9383a':'#58d86a'; ctx.beginPath(); ctx.arc(ex,ey,e.radius,0,Math.PI*2); ctx.fill(); }
+        ctx.restore();
+        if(e.hp<e.maxHp && !e.isBoss) { ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(ex-20,ey-e.radius-12,40,6); ctx.fillStyle='#d9383a'; ctx.fillRect(ex-20,ey-e.radius-12,40*Math.max(0,e.hp/e.maxHp),6); }
+      }
+
+      ctx.save(); const px=player.pos.x-camX, py=player.pos.y-camY;
+      if(player.invulnerableTimer>0 && Math.floor(player.invulnerableTimer*15)%2===0) ctx.globalAlpha=0.5;
+      if(loadedImages.player) { ctx.translate(px,py); if(player.facing==='left') ctx.scale(-1,1); ctx.drawImage(loadedImages.player,-player.radius*1.3,-player.radius*1.3+Math.sin(player.animTimer)*5,player.radius*2.6,player.radius*2.6); }
+      else { ctx.fillStyle='#f5c76c'; ctx.beginPath(); ctx.arc(px,py,player.radius,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+
+      for(const p of particles) { ctx.save(); ctx.globalAlpha=p.alpha; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.pos.x-camX,p.pos.y-camY,p.size,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+      ctx.font='bold 16px system-ui, sans-serif'; ctx.textAlign='center';
+      for(const t of floatingTexts) { ctx.save(); ctx.globalAlpha=t.alpha; ctx.fillStyle=t.color; ctx.shadowColor='#000'; ctx.shadowBlur=4; ctx.fillText(t.text,t.pos.x-camX,t.pos.y-camY); ctx.restore(); }
+
+      if(gameState==='PLAYING') {
+        ctx.save();
+        ctx.fillStyle='rgba(15,20,29,0.85)'; ctx.fillRect(20,16,canvas.width-40,22); ctx.strokeStyle='#f5c76c'; ctx.lineWidth=2; ctx.strokeRect(20,16,canvas.width-40,22);
+        ctx.fillStyle='#f6cf74'; ctx.fillRect(22,18,(canvas.width-44)*Math.min(1,player.exp/player.expToNext),18);
+        ctx.fillStyle='#fff'; ctx.font='bold 13px system-ui, sans-serif'; ctx.textAlign='center'; ctx.fillText(`УРОВЕНЬ ${player.level} (${player.exp} / ${player.expToNext} ОПЫТА)`, canvas.width/2, 32);
+
+        ctx.fillStyle='rgba(15,20,29,0.9)'; ctx.fillRect(canvas.width/2-80,48,160,36); ctx.strokeStyle='#f5c76c'; ctx.lineWidth=1.5; ctx.strokeRect(canvas.width/2-80,48,160,36);
+        ctx.fillStyle='#f6cf74'; ctx.font='bold 18px system-ui, sans-serif'; ctx.fillText(`${Math.floor(gameTimer/60).toString().padStart(2,'0')}:${Math.floor(gameTimer%60).toString().padStart(2,'0')}  |  ВОЛНА ${waveNumber}`, canvas.width/2, 72);
+
+        ctx.fillStyle='rgba(15,20,29,0.9)'; ctx.fillRect(20,canvas.height-60,260,34); ctx.strokeStyle='#d9383a'; ctx.lineWidth=2; ctx.strokeRect(20,canvas.height-60,260,34);
+        ctx.fillStyle='#e63946'; ctx.fillRect(22,canvas.height-58,256*Math.max(0,player.hp/player.maxHp),30);
+        ctx.fillStyle='#fff'; ctx.font='bold 15px system-ui, sans-serif'; ctx.fillText(`❤️ БОГАТЫРЬ: ${Math.round(player.hp)} / ${player.maxHp}`, 150, canvas.height-38);
+
+        const boss=enemies.find(e=>e.isBoss);
+        if(bossSpawned && boss) {
+          ctx.fillStyle='rgba(15,20,29,0.95)'; ctx.fillRect(canvas.width/2-240,94,480,38); ctx.strokeStyle='#58d86a'; ctx.lineWidth=3; ctx.strokeRect(canvas.width/2-240,94,480,38);
+          ctx.fillStyle='#58d86a'; ctx.fillRect(canvas.width/2-238,96,476*Math.max(0,boss.hp/boss.maxHp),34);
+          ctx.fillStyle='#fff'; ctx.font='bold 16px system-ui, sans-serif'; ctx.fillText(`👹 ЛЕШИЙ - ВЛАДЫКА ИСКРИВЛЁННОГО ЛЕСА (${Math.round(boss.hp)} / ${boss.maxHp})`, canvas.width/2, 118);
+        } else {
+          ctx.fillStyle='rgba(217,56,58,0.85)'; ctx.fillRect(canvas.width-210,48,190,36); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.strokeRect(canvas.width-210,48,190,36);
+          ctx.fillStyle='#fff'; ctx.font='bold 13px system-ui, sans-serif'; ctx.fillText('👹 ПРИЗВАТЬ ЛЕШЕГО ([B])', canvas.width-115, 71);
+        }
+        ctx.restore();
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('start-btn').onclick = () => startGame();
+    document.querySelectorAll('.restart-btn').forEach(btn => btn.onclick = () => startGame());
+    Promise.all(Object.keys(ASSET_PATHS).map(key => loadImage(key).then(img => loadedImages[key] = img))).then(() => requestAnimationFrame(loop));
+  </script>
+</body>
+</html>
